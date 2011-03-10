@@ -3,7 +3,7 @@ SOURCE_DIR := src
 RALPH_DIR := ../ralph
 TOOLBOX_DIR := ../toolbox
 
-SOURCE_FILES := $(wildcard $(SOURCE_DIR)/* $(SOURCE_DIR)/**/*)
+SOURCE_FILES := $(wildcard $(SOURCE_DIR)/*.* $(SOURCE_DIR)/**/*.*)
 FILES := $(patsubst $(SOURCE_DIR)/%, $(BUILD_DIR)/%, $(SOURCE_FILES))
 FILES := $(patsubst %.ralph, %.js, $(FILES))
 
