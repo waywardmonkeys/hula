@@ -8,8 +8,10 @@
                         min-width: 100
                         min-height: 200
                         max-width: 200
-                        max-height: 300)))
+                        max-height: 300))
+         (closer (make <closer>)))
     (attach resizer window)
+    (attach closer window)
     ;; (add-listener window "resize"
     ;;               (method (event)
     ;;                 (log "!!" event)))

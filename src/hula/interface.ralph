@@ -44,7 +44,21 @@
                        (or button (create-element "button")))))
     (add-class button "close")))
 
-
+(define-function attach ((closer <closer>) (window <window>))
+  (bind ((element (get window "element"))
+         (button (get closer "button"))
+         (closing? #f))
+    (append-child element button)
+    (bind-methods ((finished (event)
+                     (when closing?
+                       (delete-element element)
+                       (trigger window (make-event "close"))))
+                    (click (event)
+                      (do (method (type)
+                            (add-listener element type finished #f))
+                          (make-array "webkitTransitionEnd" "transitionend"))
+                      (add-class element "closed")))
+      (add-listener button "click" click #f))))
 
 ;; resizer
 
