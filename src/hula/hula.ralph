@@ -10,8 +10,8 @@
                         max-width: 200
                         max-height: 300)))
     (add-child window resizer)
-    (add-listener "resize" resizer
-                  (method ()
-                    (log "!!")))
+    ;; (add-listener window "resize"
+    ;;               (method (event)
+    ;;                 (log "!!" event)))
     (add-child (js:get-property document "body")
                (js:get-property window "element"))))

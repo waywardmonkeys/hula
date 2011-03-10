@@ -69,8 +69,8 @@
                                            new-width))
                             (new-height (if (> new-height (get resizer "max-height"))
                                             (get resizer "max-height")
-                                            new-height)))
-                       ;; TODO: trigger-event
+                                          new-height)))
+                       (trigger-event window (make-event "resize"))
                        (set! (element-width element) new-width)
                        (set! (element-height element) new-height))
                      (stop-propagation event)
