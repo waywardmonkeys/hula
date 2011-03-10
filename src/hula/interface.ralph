@@ -6,26 +6,27 @@
 
 (define-class <window> ())
 
-(define-function initialize ((window <window> #key label))
+(define-function initialize ((window <window>) #key label)
   (bind ((element (set! (get window "element")
                         (create-element "div" class: "window")))
          (header (set! (get window "header")
                        (create-element "div" class: "header")))
-         (label (set! (get window "label")
+         (label-element (set! (get window "label")
                       (create-element "label")))
          (content (set! (get window "content")
                         (create-element "div" class: "content")))
          (footer  (set! (get window "footer")
                         (create-element "div" class: "footer"))))
-    (add-child header label)
+    (add-child header label-element)
     (add-child element header)
     (add-child element content)
-    (add-child element footer)))
+    (add-child element footer)
+    (set! (header-label window) label)))
 
-(define-function label ((window <window>))
+(define-function header-label ((window <window>))
   (js:get-property window "label" "innerText"))
 
-(define-function (setter label) ((window <window>) label)
+(define-function (setter header-label) ((window <window>) label)
   (set! (js:get-property window "label" "innerText") label))
 
 ;; resizer
