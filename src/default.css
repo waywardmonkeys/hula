@@ -1,7 +1,7 @@
 body {
     background: white;
     font-family: 'Lucida Grande', arial, sans-serif;
-    background: url(background.png);
+    background: url(images/background.png);
     font-size: 12px;
 }
 
@@ -104,7 +104,7 @@ svg {
 
 .resizer {
     z-index: 1000;
-    background: url(resize.png);
+    background: url(images/resize.png);
     bottom: 0;
     right: 0;
     left: auto;
@@ -125,7 +125,7 @@ button.close {
     border: none;
     width: 14px;
     height: 14px;
-    background: url(close.png);
+    background: url(images/close.png);
     background-position: 0 0;
 }
 
