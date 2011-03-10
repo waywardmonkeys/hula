@@ -1,5 +1,6 @@
 (define-module hula
   import: (runtime/core hula/interface)
+  export: (main))
 
 (define-function main ()
   (bind ((window (make <window> label: "Test"))
