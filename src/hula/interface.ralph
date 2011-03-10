@@ -1,5 +1,5 @@
 (define-module interface
-  import: (core dom)
+  import: (runtime/core toolbox/dom)
   export: (<window> <resizer>))
 
 ;; window

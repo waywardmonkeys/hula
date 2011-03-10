@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="default.css" type="text/css" />
     <script src="require.js"></script>
     <script>
-      require('hula', function (hula) {
+      require('hula/hula', function (hula) {
+        console.log(hula);
         window.onload = hula.main;
       });
     </script>
