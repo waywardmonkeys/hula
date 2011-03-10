@@ -1,6 +1,6 @@
 (define-module interface
   import: (core dom)
-  export: ()
+  export: (<window> <resizer>))
 
 ;; window
 
