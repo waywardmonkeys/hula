@@ -1,0 +1,17 @@
+(define-module hula
+  import: (core interface))
+
+(define-function main ()
+  (bind ((window (make <window> label: "Test"))
+         (resizer (make <resizer>
+                        min-width: 100
+                        min-height: 200
+                        max-width: 200
+                        max-height: 300)))
+    (append-child resizer window)
+    (add-event-listener "resize" resizer
+                        (method ()
+                          ((js:get-property "console" "log") "!!")))
+    (append-child (js:get-property document "body")
+                  (js:get-property window "element"))))
+
