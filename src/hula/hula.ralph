@@ -9,9 +9,11 @@
                         min-height: 200
                         max-width: 200
                         max-height: 300))
-         (closer (make <closer>)))
+         (closer (make <closer>))
+         (dragger (make <dragger> handle: (get window "header"))))
     (attach resizer window)
     (attach closer window)
+    (attach dragger window)
     ;; (add-listener window "resize"
     ;;               (method (event)
     ;;                 (log "!!" event)))
