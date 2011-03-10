@@ -14,4 +14,3 @@
                           ((js:get-property "console" "log") "!!")))
     (append-child (js:get-property document "body")
                   (js:get-property window "element"))))
-
