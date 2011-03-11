@@ -6,22 +6,16 @@
   (log "HULA")
   (bind ((window (make <window> label: "Test"))
          (note (make <note> label: "Todo"))
+         (search (make <search-window>))
          (arrow (make <arrow>
                       source: window
                       target: note
                       offset: 50)))
-    (do (method (view)
-          (bind ((resizer (make <resizer>
-                                min-width: 100
-                                min-height: 200
-                                max-width: 200
-                                max-height: 300))
-                 (closer (make <closer>))
-                 (dragger (make <dragger> element: (get view "header"))))
-            (attach resizer view)
-            (attach closer view)
-            (attach dragger view)
-            (attach view (js:get-property document "body"))))
-        (make-array window note))
-    (attach arrow (js:get-property document "body"))))
-
+        (do (rcurry attach (js:get-property document "body"))
+            (make-array window note arrow search))
+        (set! (view-position window)
+              (make-array 100 100))
+        (set! (view-position note)
+              (make-array 250 200))
+        (set! (view-position search)
+              (make-array 400 100))))
