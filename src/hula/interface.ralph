@@ -22,6 +22,15 @@
   label
   content)
 
+(define-function initialize ((view <view>))
+  (bind ((resizer (make <resizer>
+                        min-width: 100
+                        min-height: 100))
+         (closer (make <closer>))
+         (dragger (make <dragger> element: (get view "header"))))
+    (attach resizer view)
+    (attach closer view)
+    (attach dragger view)))
 
 (define-function (setter view-position) ((view <view>) position)
   (bind ((element (get view "element")))
@@ -55,7 +64,8 @@
     (append-child element header)
     (append-child element content)
     (append-child element footer)
-    (set! (header-label window) label)))
+    (set! (header-label window) label))
+  (next-method window))
 
 ;; note
 
@@ -73,7 +83,8 @@
     (append-child header label-element)
     (append-child element header)
     (append-child element content)
-    (set! (header-label note) label)))
+    (set! (header-label note) label))
+  (next-method note))
 
 ;; dragger
 
