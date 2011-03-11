@@ -22,6 +22,14 @@
   label
   content)
 
+
+(define-function (setter view-position) ((view <view>) position)
+  (bind ((element (get view "element")))
+    (destructuring-bind (left top) position
+      (set! (element-left element) left)
+      (set! (element-top element) top)))
+  (trigger-event view (make-event "move")))
+
 (define-function header-label ((view <view>))
   (js:get-property view "label" "innerHTML"))
 
