@@ -3,18 +3,23 @@
   export: (main))
 
 (define-function main ()
-  (bind ((window (make <window> label: "Test"))
-         (resizer (make <resizer>
-                        min-width: 100
-                        min-height: 200
-                        max-width: 200
-                        max-height: 300))
-         (closer (make <closer>))
-         (dragger (make <dragger> handle: (get window "header"))))
-    (attach resizer window)
-    (attach closer window)
-    (attach dragger window)
-    ;; (add-listener window "resize"
-    ;;               (method (event)
-    ;;                 (log "!!" event)))
-    (attach window (js:get-property document "body"))))
+  (log "HULA")
+  (do (method (view)
+        (bind ((resizer (make <resizer>
+                              min-width: 100
+                              min-height: 200
+                              max-width: 200
+                              max-height: 300))
+               (closer (make <closer>))
+               (dragger (make <dragger> handle: (get view "header"))))
+          (attach resizer view)
+          (attach closer view)
+          (attach dragger view)
+          (attach view (js:get-property document "body"))))
+      (make-array
+       (make <window> label: "Test")
+       (make <note> label: "Todo"))))
+
+;; (add-listener window "resize"
+;;               (method (event)
+;;                 (log "!!" event)))

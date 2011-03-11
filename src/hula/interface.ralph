@@ -2,11 +2,25 @@
   import: (runtime/core toolbox/dom)
   export: (<window> <resizer>))
 
-;; window
-
 (define-generic attach (object target))
 
-(define-class <window> ())
+(define-class <view> ()
+  element
+  header
+  label)
+
+(define-function attach ((view <view>) element)
+  (append-child element (get view "element")))
+
+(define-function header-label ((view <view>))
+  (js:get-property view "label" "innerText"))
+
+(define-function (setter header-label) ((view <view>) label)
+  (set! (js:get-property view "label" "innerText") label))
+
+;; window
+
+(define-class <window> (<view>))
 
 (define-function initialize ((window <window>) #key label)
   (bind ((element (set! (get window "element")
@@ -25,14 +39,23 @@
     (append-child element footer)
     (set! (header-label window) label)))
 
-(define-function header-label ((window <window>))
-  (js:get-property window "label" "innerText"))
+;; note
 
-(define-function (setter header-label) ((window <window>) label)
-  (set! (js:get-property window "label" "innerText") label))
+(define-class <note> (<view>))
 
-(define-function attach ((window <window>) element)
-  (append-child element (get window "element")))
+(define-function initialize ((note <note>) #key label)
+  (bind ((element (set! (get note "element")
+                        (create-element "div" class: "note")))
+         (header (set! (get note "header")
+                       (create-element "div" class: "header")))
+         (label-element (set! (get note "label")
+                      (create-element "label")))
+         (content (set! (get note "content")
+                        (create-element "div" class: "content"))))
+    (append-child header label-element)
+    (append-child element header)
+    (append-child element content)
+    (set! (header-label note) label)))
 
 ;; dragger
 
@@ -44,8 +67,8 @@
                        (or handle (create-element "div")))))
     (add-class handle "dragger")))
 
-(define-function attach ((dragger <dragger>) (window <window>))
-  (bind ((element (get window "element"))
+(define-function attach ((dragger <dragger>) (view <view>))
+  (bind ((element (get view "element"))
          (handle (get dragger "handle"))
          (start-x) (start-y)
          (start-left) (start-top))
@@ -57,7 +80,7 @@
                             (top (+ start-top (- y start-y)))
                             (new-left (if (< left 0) 0 left))
                             (new-top (if (< top 0) 0 top)))
-                       (trigger-event window (make-event "move"))
+                       (trigger-event view (make-event "move"))
                        (set! (element-left element) new-left)
                        (set! (element-top element) new-top))
                      (stop-propagation event)
@@ -92,15 +115,15 @@
                        (or button (create-element "button")))))
     (add-class button "close")))
 
-(define-function attach ((closer <closer>) (window <window>))
-  (bind ((element (get window "element"))
+(define-function attach ((closer <closer>) (view <view>))
+  (bind ((element (get view "element"))
          (button (get closer "button"))
          (closing? #f))
     (append-child element button)
     (bind-methods ((finished (event)
                      (when closing?
                        (delete-element element)
-                       (trigger window (make-event "close"))))
+                       (trigger view (make-event "close"))))
                     (click (event)
                       (do (method (type)
                             (add-listener element type finished #f))
@@ -127,8 +150,8 @@
   (set! (get resizer "min-height") min-height)
   (set! (get resizer "max-height") max-height))
 
-(define-function attach ((resizer <resizer>) (window <window>))
-  (bind ((element (get window "element"))
+(define-function attach ((resizer <resizer>) (view <view>))
+  (bind ((element (get view "element"))
          (handle (get resizer "handle"))
          (start-x) (start-y)
          (start-width) (start-height))
@@ -150,7 +173,7 @@
                             (new-height (if (> new-height (get resizer "max-height"))
                                             (get resizer "max-height")
                                           new-height)))
-                       (trigger-event window (make-event "resize"))
+                       (trigger-event view (make-event "resize"))
                        (set! (element-width element) new-width)
                        (set! (element-height element) new-height))
                      (stop-propagation event)
