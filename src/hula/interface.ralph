@@ -1,22 +1,26 @@
 (define-module interface
-  import: (runtime/core toolbox/dom)
+  import: (runtime/core runtime/watch
+           toolbox/dom)
   export: (<window> <resizer>))
-
-(define-generic attach (object target))
 
 ;; component
 
 (define-class <component> ()
   element)
 
+(define-generic attach (component target))
+
 (define-function attach ((component <component>) element)
   (append-child element (get component "element")))
+
+(define-generic update (component))
 
 ;; view
 
 (define-class <view> (<component>)
   header
-  label)
+  label
+  content)
 
 (define-function header-label ((view <view>))
   (js:get-property view "label" "innerHTML"))
@@ -196,3 +200,35 @@
                      (stop-propagation event)
                      (prevent-default event)))
       (add-listener element "mousedown" down #t))))
+
+;; arrow
+
+(define-function create-svg-element (name)
+  ((js:get-property document "createElementNS")
+   "http://www.w3.org/2000/svg" name))
+
+(define-class <arrow> (<component>)
+  path
+  source
+  target)
+
+(define-function initialize ((arrow <arrow>) #key source target)
+  (bind ((element (set! (get arrow "element")
+                        (create-svg-element "svg")))
+         (path (set! (get arrow "path")
+                     (create-svg-element "path")))
+         (updater (curry update arrow)))
+    (append-child element path)
+    (set! (get arrow "source") source)
+    (set! (get arrow "target") target)
+    (add-listener source "move" updater)
+    (add-listener source "resize" updater)
+    (add-listener target "move" updater)
+    (add-listener target "resize" updater)
+    (watch arrow "source" updater)
+    (watch arrow "target" updater)
+    (updater)))
+
+(define-function update ((arrow <arrow>))
+;;  (log "UPDATE ARROW"))
+  )

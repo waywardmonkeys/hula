@@ -160,3 +160,10 @@ button.close:hover {
 svg {
     border: 1px solid red;
 }
+
+path {
+    stroke: #555;
+    fill: none;
+    stroke-width: 2;
+    stroke-linejoin: bevel;
+}
