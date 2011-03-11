@@ -11,7 +11,7 @@
                               max-width: 200
                               max-height: 300))
                (closer (make <closer>))
-               (dragger (make <dragger> handle: (get view "header"))))
+               (dragger (make <dragger> element: (get view "header"))))
           (attach resizer view)
           (attach closer view)
           (attach dragger view)

@@ -4,13 +4,19 @@
 
 (define-generic attach (object target))
 
-(define-class <view> ()
-  element
+;; component
+
+(define-class <component> ()
+  element)
+
+(define-function attach ((component <component>) element)
+  (append-child element (get component "element")))
+
+;; view
+
+(define-class <view> (<component>)
   header
   label)
-
-(define-function attach ((view <view>) element)
-  (append-child element (get view "element")))
 
 (define-function header-label ((view <view>))
   (js:get-property view "label" "innerHTML"))
@@ -59,20 +65,19 @@
 
 ;; dragger
 
-(define-class <dragger> ()
-  handle)
+(define-class <dragger> (<component>))
 
-(define-function initialize ((dragger <dragger>) #key handle)
-  (bind ((handle (set! (get dragger "handle")
-                       (or handle (create-element "div")))))
-    (add-class handle "dragger")))
+(define-function initialize ((dragger <dragger>) #key element)
+  (bind ((element (set! (get dragger "element")
+                        (or element (create-element "div")))))
+    (add-class element "dragger")))
 
 (define-function attach ((dragger <dragger>) (view <view>))
-  (bind ((element (get view "element"))
-         (handle (get dragger "handle"))
+  (bind ((view-element (get view "element"))
+         (element (get dragger "element"))
          (start-x) (start-y)
          (start-left) (start-top))
-    (append-child element handle)
+    (append-child view-element element)
     (bind-methods ((move (event)
                      (bind ((x (js:get-property event "clientX"))
                             (y (js:get-property event "clientY"))
@@ -81,14 +86,14 @@
                             (new-left (if (< left 0) 0 left))
                             (new-top (if (< top 0) 0 top)))
                        (trigger-event view (make-event "move"))
-                       (set! (element-left element) new-left)
-                       (set! (element-top element) new-top))
+                       (set! (element-left view-element) new-left)
+                       (set! (element-top view-element) new-top))
                      (stop-propagation event)
                      (prevent-default event))
                    (up (event)
                      (remove-listener document "mouseup" up #t)
                      (remove-listener document "mousemove" move #t)
-                     (set! (get element "style" "cursor")
+                     (set! (get view-element "style" "cursor")
                            "default")
                      (stop-propagation event)
                      (prevent-default event))
@@ -97,65 +102,63 @@
                      (add-listener document "mousemove" move #t)
                      (set! start-x (js:get-property event "clientX"))
                      (set! start-y (js:get-property event "clientY"))
-                     (set! start-left (element-left element))
-                     (set! start-top (element-top element))
-                     (set! (get element "style" "cursor")
+                     (set! start-left (element-left view-element))
+                     (set! start-top (element-top view-element))
+                     (set! (get view-element "style" "cursor")
                            "move")
                      (stop-propagation event)
                      (prevent-default event)))
-      (add-listener handle "mousedown" down #t))))
+      (add-listener element "mousedown" down #t))))
 
 ;; closer
 
-(define-class <closer> ()
-  button)
+(define-class <closer> (<component>))
 
-(define-function initialize ((closer <closer>) #key button)
-  (bind ((button (set! (get closer "button")
-                       (or button (create-element "button")))))
-    (add-class button "close")))
+(define-function initialize ((closer <closer>) #key element)
+  (bind ((element (set! (get closer "element")
+                        (or element (create-element "button")))))
+    (add-class element "close")))
 
 (define-function attach ((closer <closer>) (view <view>))
-  (bind ((element (get view "element"))
-         (button (get closer "button"))
+  (bind ((view-element (get view "element"))
+         (element (get closer "element"))
          (closing? #f))
-    (append-child element button)
+    (append-child view-element element)
     (bind-methods ((finished (event)
                      (when closing?
-                       (delete-element element)
+                       (delete-element view-element)
                        (trigger view (make-event "close"))))
                     (click (event)
                       (do (method (type)
-                            (add-listener element type finished #f))
+                            (add-listener view-element type finished #f))
                           (make-array "webkitTransitionEnd" "transitionend"))
-                      (add-class element "closed")))
-      (add-listener button "click" click #f))))
+                      (add-class view-element "closed")))
+      (add-listener element "click" click #f))))
 
 ;; resizer
 
-(define-class <resizer> ()
-  handle
+(define-class <resizer> (<component>)
   min-width
   max-width
   min-height
   max-height)
 
-(define-function initialize ((resizer <resizer>) #key handle
+(define-function initialize ((resizer <resizer>) #key element
                              min-width max-width min-height max-height)
-  (bind ((handle (set! (get resizer "handle")
-                       (or handle (create-element "div")))))
-    (add-class handle "resizer"))
+  (bind ((element (set! (get resizer "element")
+                        (or element (create-element "div")))))
+    (add-class element "resizer"))
   (set! (get resizer "min-width") min-width)
   (set! (get resizer "max-width") max-width)
   (set! (get resizer "min-height") min-height)
   (set! (get resizer "max-height") max-height))
 
 (define-function attach ((resizer <resizer>) (view <view>))
-  (bind ((element (get view "element"))
-         (handle (get resizer "handle"))
+  (bind ((view-element (get view "element"))
+         (element (get resizer "element"))
          (start-x) (start-y)
          (start-width) (start-height))
-    (append-child element handle)
+    (append-child view-element element)
     (bind-methods ((move (event)
                      (bind ((x (js:get-property event "clientX"))
                             (y (js:get-property event "clientY"))
@@ -174,8 +177,8 @@
                                             (get resizer "max-height")
                                           new-height)))
                        (trigger-event view (make-event "resize"))
-                       (set! (element-width element) new-width)
-                       (set! (element-height element) new-height))
+                       (set! (element-width view-element) new-width)
+                       (set! (element-height view-element) new-height))
                      (stop-propagation event)
                      (prevent-default event))
                    (up (event)
@@ -188,8 +191,8 @@
                      (add-listener document "mousemove" move #t)
                      (set! start-x (js:get-property event "clientX"))
                      (set! start-y (js:get-property event "clientY"))
-                     (set! start-width (element-width element))
-                     (set! start-height (element-height element))
+                     (set! start-width (element-width view-element))
+                     (set! start-height (element-height view-element))
                      (stop-propagation event)
                      (prevent-default event)))
-      (add-listener handle "mousedown" down #t))))
+      (add-listener element "mousedown" down #t))))
