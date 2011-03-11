@@ -147,6 +147,10 @@ button.close:hover {
     background-image: -moz-linear-gradient(#FBF9C0, #FFEE6E);
 }
 
+.note .content {
+    bottom: 0;
+}
+
 .note .header {
     background-image: -webkit-gradient(linear, 0% 0%, 0% 100%,
 				       from(#FBF9C0),
@@ -156,6 +160,16 @@ button.close:hover {
     border-bottom: 1px solid #EEDD5D;
     text-shadow: #FDFBC2 0px 1px 0px;
     color: #AA9000;
+}
+
+.note textarea {
+    background: transparent;
+    border: none;
+    resize: none;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    outline: none;
 }
 
 svg {

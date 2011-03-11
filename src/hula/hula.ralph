@@ -5,7 +5,9 @@
 (define-function main ()
   (log "HULA")
   (bind ((window (make <window> label: "Test"))
-         (note (make <note> label: "Todo"))
+         (note (make <note>
+                     label: "Todo"
+                     text: "Simple test"))
          (search (make <search-window>))
          (arrow (make <arrow>
                       source: window

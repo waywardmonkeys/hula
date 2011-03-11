@@ -71,7 +71,7 @@
 
 (define-class <note> (<view>))
 
-(define-function initialize ((note <note>) #key label)
+(define-function initialize ((note <note>) #key label text)
   (bind ((element (set! (get note "element")
                         (create-element "div" class: "note")))
          (header (set! (get note "header")
@@ -79,12 +79,22 @@
          (label-element (set! (get note "label")
                       (create-element "label")))
          (content (set! (get note "content")
-                        (create-element "div" class: "content"))))
+                        (create-element "div" class: "content")))
+         (text-element (set! (get note "text")
+                             (create-element "textarea"))))
     (append-child header label-element)
     (append-child element header)
+    (append-child content text-element)
     (append-child element content)
-    (set! (header-label note) label))
+    (set! (header-label note) label)
+    (set! (note-text note) text))
   (next-method note))
+
+(define-function note-text ((note <note>))
+  (js:get-property note "text" "innerHTML"))
+
+(define-function (setter note-text) ((note <view>) text)
+  (set! (js:get-property note "text" "innerHTML") text))
 
 ;; dragger
 
