@@ -84,6 +84,7 @@ svg {
     top: 16px;
     bottom: 16px;
     padding: 5px;
+    overflow: auto;
 }
 
 .window .footer {
