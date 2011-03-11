@@ -305,3 +305,11 @@
                        points))
   (set! (attribute path "d")
         (concatenate "M" (join (map (rcurry join ",") points*) "L"))))
+
+;; search
+
+(define-class <search-window> (<window>))
+
+(define-function initialize ((window <search-window>))
+  (next-method window)
+  (set! (header-label window) "Search"))
