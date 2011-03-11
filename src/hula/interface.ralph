@@ -210,9 +210,10 @@
 (define-class <arrow> (<component>)
   path
   source
-  target)
+  target
+  offset)
 
-(define-function initialize ((arrow <arrow>) #key source target)
+(define-function initialize ((arrow <arrow>) #key source target offset)
   (bind ((element (set! (get arrow "element")
                         (create-svg-element "svg")))
          (path (set! (get arrow "path")
@@ -221,6 +222,7 @@
     (append-child element path)
     (set! (get arrow "source") source)
     (set! (get arrow "target") target)
+    (set! (get arrow "offset") offset)
     (add-listener source "move" updater)
     (add-listener source "resize" updater)
     (add-listener target "move" updater)
@@ -230,5 +232,57 @@
     (updater)))
 
 (define-function update ((arrow <arrow>))
-;;  (log "UPDATE ARROW"))
-  )
+  (js:var path (get arrow "path"))
+  (js:var element (get arrow "element"))
+  (js:var offset (get arrow "offset"))
+  (js:var source-element (get arrow "source" "element"))
+  (js:var target-element (get arrow "target" "element"))
+  (js:var source-header-height (element-height (get arrow "source" "header")))
+  (js:var target-header-height (element-height (get arrow "target" "header")))
+  (js:var start-x (element-left source-element))
+  (js:var start-y (+ (element-top source-element) offset))
+  (js:var start-y* (+ start-y (/ source-header-height 2)))
+  (js:var end-x (element-left target-element))
+  (js:var end-y (element-top target-element))
+  (js:var end-y* (+ end-y (/ target-header-height 2)))
+  (js:var left (min start-x end-x))
+  (js:var top (min start-y end-y))
+  (js:var distance-x (abs (- start-x end-x)))
+  (js:var distance-y (abs (- start-y end-y)))
+  (js:var behind? (< start-x end-x))
+  (js:var below? (< start-y end-y))
+  (js:var width (+ distance-x
+                   (element-width
+                    (if behind?
+                        target-element
+                        source-element))))
+  (js:var height (+ distance-y
+                    (element-height
+                     (if below?
+                         target-element
+                         source-element))))
+  (set! (element-top element) top)
+  (set! (element-left element) left)
+  (set! (element-width element) width)
+  (set! (element-height element) height)
+  (js:var points (if behind?
+                     (bind ((start-x* (- (+ start-x (element-width source-element)) 5))
+                            (middle (round (+ start-x* (/ (abs (- end-x start-x*)) 2)))))
+                       (make-array
+                        (make-array start-x* start-y*)
+                        (make-array middle start-y*)
+                        (make-array middle end-y*)
+                        (make-array end-x end-y*)))
+                     (bind ((end-x* (+ end-x (element-width target-element)))
+                            (middle (round (+ end-x* (/ (abs (- end-x* start-x)) 2)))))
+                       (make-array
+                        (make-array (+ start-x 5) start-y*)
+                        (make-array middle start-y*)
+                        (make-array middle end-y*)
+                        (make-array end-x* end-y*)))))
+  (js:var points* (map (method (point)
+                         (make-array (- (first point) left)
+                                     (- (second point) top)))
+                       points))
+  (set! (attribute path "d")
+        (concatenate "M" (join (map (rcurry join ",") points*) "L"))))

@@ -8,7 +8,8 @@
          (note (make <note> label: "Todo"))
          (arrow (make <arrow>
                       source: window
-                      target: note)))
+                      target: note
+                      offset: 50)))
     (do (method (view)
           (bind ((resizer (make <resizer>
                                 min-width: 100
@@ -24,6 +25,3 @@
         (make-array window note))
     (attach arrow (js:get-property document "body"))))
 
-;; (add-listener window "resize"
-;;               (method (event)
-;;                 (log "!!" event)))
