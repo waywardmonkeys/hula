@@ -325,3 +325,15 @@
 
 (define-function (setter footer-label) ((window <search-window>) label)
   (set! (js:get-property window "footer-label" "innerHTML") label))
+
+(define-function initiate-search ((window <search-window>))
+  (log "SEARCH!")
+  (bind ((element (get window "element")))
+    (add-class element "searching")
+    (do (method (type)
+          (add-listener element type
+                        (method ()
+                          (remove-class element "searching"))
+                        #f))
+        (make-array "webkitTransitionEnd" "transitionend"))
+    (set! (element-height element) 300)))

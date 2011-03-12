@@ -44,6 +44,13 @@ svg {
     -moz-transform: scale(0.5);
 }
 
+.view.search.searching {
+    -webkit-transition-property: width, height;
+    -moz-transition-property: width, height;
+    -webkit-transition-duration: 300ms;
+    -moz-transition-duration: 300ms;
+}
+
 .view > * {
     position: absolute;
     left: 0;
@@ -201,6 +208,32 @@ button.close:hover {
     margin-bottom: -5px;
 }
 
+/* search */
+
+
+.view.search {
+    min-height: 64px;
+    min-width: 150px;
+}
+
+.view.search .header .icon {
+    display: inline-block;
+    background: url(images/search.png);
+}
+
+.view.search section {
+    padding: 5px;
+    background: #eee;
+}
+
+.view.search ul {
+    border-top: 1px solid #BDBDBD;
+}
+
+.view.search section input {
+    width: 100%
+}
+
 svg {
     border: 1px solid red;
 }
@@ -211,4 +244,3 @@ path {
     stroke-width: 2;
     stroke-linejoin: bevel;
 }
-
