@@ -34,9 +34,7 @@
                               (create-element "label")))
          (content (set! (get view "content")
                         (create-element "div" class: "content")))
-         (resizer (make <resizer>
-                        min-width: 100
-                        min-height: 100))
+         (resizer (make <resizer>))
          (closer (make <closer>))
          (dragger (make <dragger> element: (get view "header"))))
     (append-child header icon)
@@ -178,48 +176,28 @@
 
 ;; resizer
 
-(define-class <resizer> (<component>)
-  min-width
-  max-width
-  min-height
-  max-height)
+(define-class <resizer> (<component>))
 
-(define-function initialize ((resizer <resizer>) #key element
-                             min-width max-width min-height max-height)
+(define-function initialize ((resizer <resizer>) #key element)
   (bind ((element (set! (get resizer "element")
                         (or element (create-element "div")))))
-    (add-class element "resizer"))
-  (set! (get resizer "min-width") min-width)
-  (set! (get resizer "max-width") max-width)
-  (set! (get resizer "min-height") min-height)
-  (set! (get resizer "max-height") max-height))
+    (add-class element "resizer")))
 
 (define-function attach ((resizer <resizer>) (view <view>))
   (bind ((view-element (get view "element"))
          (element (get resizer "element"))
          (start-x) (start-y)
          (start-width) (start-height))
+    (set! (get view "resizer") resizer)
     (append-child view-element element)
     (bind-methods ((move (event)
                      (bind ((x (js:get-property event "clientX"))
                             (y (js:get-property event "clientY"))
                             (width (+ start-width (- x start-x)))
-                            (height (+ start-height (- y start-y)))
-                            (new-width (if (< width (get resizer "min-width"))
-                                           (get resizer "min-width")
-                                           width))
-                            (new-height (if (< height (get resizer "min-height"))
-                                            (get resizer "min-height")
-                                            height))
-                            (new-width (if (> new-width (get resizer "max-width"))
-                                           (get resizer "max-width")
-                                           new-width))
-                            (new-height (if (> new-height (get resizer "max-height"))
-                                            (get resizer "max-height")
-                                          new-height)))
+                            (height (+ start-height (- y start-y))))
                        (trigger-event view (make-event "resize"))
-                       (set! (element-width view-element) new-width)
-                       (set! (element-height view-element) new-height))
+                       (set! (element-width view-element) width)
+                       (set! (element-height view-element) height))
                      (stop-propagation event)
                      (prevent-default event))
                    (up (event)
