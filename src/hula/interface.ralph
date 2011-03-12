@@ -337,3 +337,12 @@
                         #f))
         (make-array "webkitTransitionEnd" "transitionend"))
     (set! (element-height element) 300)))
+
+;; editor
+
+(define-class <editor-window> (<window>))
+
+(define-function initialize ((window <editor-window>))
+  (next-method window)
+  (add-class (get window "element") "editor")
+  (set! (header-label window) "Editor"))

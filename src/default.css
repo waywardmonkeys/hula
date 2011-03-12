@@ -210,7 +210,6 @@ button.close:hover {
 
 /* search */
 
-
 .view.search {
     min-height: 64px;
     min-width: 150px;
@@ -232,6 +231,13 @@ button.close:hover {
 
 .view.search section input {
     width: 100%
+}
+
+/* editor */
+
+.view.editor .header .icon {
+    display: inline-block;
+    background: url(images/editor.png);
 }
 
 svg {
