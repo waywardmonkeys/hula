@@ -50,10 +50,6 @@ svg {
     right: 0;
 }
 
-.window {
-    background: white;
-}
-
 .view .header {
     border-radius: 5px 5px 0 0;
     height: 18px;
@@ -69,14 +65,7 @@ svg {
     margin-right: 5px;
     width: 16px;
     height: 16px;
-}
-
-.view .header .icon.search {
-    background: url(images/search.png);
-}
-
-.view .header .icon.note {
-    background: url(images/note.png);
+    display: none;
 }
 
 .view .header label {
@@ -84,6 +73,27 @@ svg {
     -webkit-user-select: none;
     -moz-user-select: none;
     font-weight: bold;
+}
+
+.view .content {
+    top: 18px;
+    bottom: 16px;
+}
+
+.view .resizer {
+    z-index: 1000;
+    background: url(images/resize.png);
+    bottom: 0;
+    right: 0;
+    left: auto;
+    height: 12px;
+    width: 12px;
+}
+
+/* window */
+
+.view.window {
+    background: white;
 }
 
 .view.window .header {
@@ -94,18 +104,12 @@ svg {
     border-bottom: 1px solid #BDBDBD;
 }
 
-.window .header label {
+.view.window .header label {
     color: #666;
     text-shadow: white 0px 1px 0px;
 }
 
-.view .content {
-    top: 16px;
-    bottom: 16px;
-    overflow: auto;
-}
-
-.window .footer {
+.view.window .footer {
     bottom: 0;
     background-image: -webkit-gradient(linear, 0% 0%, 0% 100%,
 				       from(#fdfdfd),
@@ -122,25 +126,17 @@ svg {
     padding: 0 5px;
 }
 
-.window .footer label {
+.view.window .footer label {
     font-size: 10px;
     color: #555;
-}
-
-.view .resizer {
-    z-index: 1000;
-    background: url(images/resize.png);
-    bottom: 0;
-    right: 0;
-    left: auto;
-    height: 12px;
-    width: 12px;
 }
 
 button {
     -webkit-user-select: none;
     -moz-user-select: none;
 }
+
+/* close */
 
 button.close {
     z-index: 1000;
@@ -161,6 +157,8 @@ button.close:active {
 button.close:hover {
     background-position: 28px 0;
 }
+
+/* note */
 
 .view.note {
     width: 100px;
@@ -184,6 +182,11 @@ button.close:hover {
     border-bottom: 1px solid #EEDD5D;
     text-shadow: #FDFBC2 0px 1px 0px;
     color: #AA9000;
+}
+
+.view.note .header .icon {
+    display: inline-block;
+    background: url(images/note.png);
 }
 
 .view.note textarea {

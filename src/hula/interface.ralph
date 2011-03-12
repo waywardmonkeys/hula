@@ -42,7 +42,6 @@
     (append-child element header)
     (append-child element content)
     (set! (header-label view) label)
-    (set! (icon-visibility view) #f)
     (attach resizer view)
     (attach closer view)
     (attach dragger view)))
@@ -59,14 +58,6 @@
 
 (define-function (setter header-label) ((view <view>) label)
   (set! (js:get-property view "label" "innerHTML") label))
-
-(define-function (setter icon-visibility) ((view <view>) visible?)
-  (set! (js:get-property view "icon" "style" "display")
-        (if visible? "inline-block" "none")))
-
-(define-function (setter icon) ((view <view>) name)
-  (set! (js:get-property view "icon" "className")
-        (concatenate "icon " name)))
 
 ;; window
 
@@ -92,9 +83,7 @@
                              (create-element "textarea"))))
     (add-class element "note")
     (append-child content text-element)
-    (set! (note-text note) text))
-  (set! (icon-visibility note) #t)
-  (set! (icon note) "note"))
+    (set! (note-text note) text)))
 
 (define-function note-text ((note <note>))
   (js:get-property note "text" "innerHTML"))
@@ -310,11 +299,24 @@
   (next-method window)
   (bind ((footer-label-element
           (set! (get window "footer-label")
-                (create-element "label"))))
+                (create-element "label")))
+         (content (get window "content"))
+         (section (create-element "section"
+                                  parent: content))
+         (results (set! (get window "results")
+                        (create-element "ul"
+                                        parent: content)))
+         (input (set! (get window "input")
+                      (create-element "input"
+                                      parent: section))))
     (append-child (get window "footer")
-                  footer-label-element))
-  (set! (icon-visibility window) #t)
-  (set! (icon window) "search")
+                  footer-label-element)
+    (set! (attribute input "type") "search")
+    (add-listener input "keypress"
+                  (method (event)
+                    (when (== (get event "keyCode") 13)
+                      (initiate-search window)))))
+  (add-class (get window "element") "search")
   (set! (header-label window) "Search")
   (set! (footer-label window) "0 Results"))
 
