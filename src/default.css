@@ -250,3 +250,12 @@ path {
     stroke-width: 2;
     stroke-linejoin: bevel;
 }
+
+.view.editor div.editor {
+    height: 100%;
+    overflow: auto;
+}
+
+.CodeMirror-gutter {
+    overflow: hidden;
+}

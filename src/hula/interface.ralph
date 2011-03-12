@@ -338,11 +338,34 @@
         (make-array "webkitTransitionEnd" "transitionend"))
     (set! (element-height element) 300)))
 
-;; editor
+;; editor component
+
+(define-class <editor> (<component>))
+
+(define-function initialize ((editor <editor>))
+  (bind ((element (set! (get editor "element")
+                        (create-element "div" class: "editor")))
+         (text (set! (get editor "text")
+                     (create-element "textarea"
+                                     parent: element))))
+    (set! (js:get-property text "innerHTML")
+          "function foo () { return 'foo'; }")
+    (set! (get editor "editor")
+          ((js:get-property "CodeMirror" "fromTextArea")
+           text (make-object
+                 "lineNumbers" #t
+                 "matchBrackets" #t)))))
+
+;; editor window
 
 (define-class <editor-window> (<window>))
 
 (define-function initialize ((window <editor-window>))
   (next-method window)
   (add-class (get window "element") "editor")
-  (set! (header-label window) "Editor"))
+  (set! (header-label window) "Editor")
+  (bind ((editor (make <editor>)))
+    (append-child (get window "content")
+                  (get editor "element"))))
+
+
