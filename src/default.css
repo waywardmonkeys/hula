@@ -18,7 +18,7 @@ svg {
     z-index: -1000;
 }
 
-.window, .note {
+.view {
     position: absolute;
     width: 100px;
     height: 200px;
@@ -36,13 +36,13 @@ svg {
     -moz-transition-duration: 200ms;
 }
 
-.closed {
+.view.closed {
     opacity: 0;
     -webkit-transform: scale(0.5);
     -moz-transform: scale(0.5);
 }
 
-.window > *, .note > * {
+.view > * {
     position: absolute;
     left: 0;
     right: 0;
@@ -52,15 +52,39 @@ svg {
     background: white;
 }
 
-
-.header {
+.view .header {
     border-radius: 5px 5px 0 0;
     height: 18px;
-    padding: 2px 5px 1px;
+    padding: 0 5px;
     top: 0;
 }
 
-.window .header {
+.view .header > * {
+    vertical-align: middle;
+}
+
+.view .header .icon {
+    margin-right: 5px;
+    width: 16px;
+    height: 16px;
+}
+
+.view .header .icon.search {
+    background: url(images/search.png);
+}
+
+.view .header .icon.note {
+    background: url(images/note.png);
+}
+
+.view .header label {
+    cursor: inherit;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    font-weight: bold;
+}
+
+.view.window .header {
     background-image: -webkit-gradient(linear, 0% 0%, 0% 100%,
 				       from(#F3F3F3),
 				       to(#D1D1D1));
@@ -68,22 +92,14 @@ svg {
     border-bottom: 1px solid #BDBDBD;
 }
 
-.header label {
-    cursor: inherit;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    font-weight: bold;
-}
-
 .window .header label {
     color: #666;
     text-shadow: white 0px 1px 0px;
 }
 
-.content {
+.view .content {
     top: 16px;
     bottom: 16px;
-    padding: 5px;
     overflow: auto;
 }
 
@@ -101,9 +117,15 @@ svg {
     border-top: 1px solid #ddd;
     height: 16px;
     border-radius: 0 0 5px 5px;
+    padding: 0 5px;
 }
 
-.resizer {
+.window .footer label {
+    font-size: 10px;
+    color: #555;
+}
+
+.view .resizer {
     z-index: 1000;
     background: url(images/resize.png);
     bottom: 0;
@@ -138,7 +160,7 @@ button.close:hover {
     background-position: 28px 0;
 }
 
-.note {
+.view.note {
     width: 100px;
     width: 100px;
     background-image: -webkit-gradient(linear, 0% 0%, 0% 100%,
@@ -147,11 +169,11 @@ button.close:hover {
     background-image: -moz-linear-gradient(#FBF9C0, #FFEE6E);
 }
 
-.note .content {
+.view.note .content {
     bottom: 0;
 }
 
-.note .header {
+.view.note .header {
     background-image: -webkit-gradient(linear, 0% 0%, 0% 100%,
 				       from(#FBF9C0),
 				       to(#FAE969));
@@ -162,7 +184,7 @@ button.close:hover {
     color: #AA9000;
 }
 
-.note textarea {
+.view.note textarea {
     background: transparent;
     border: none;
     resize: none;
@@ -170,6 +192,8 @@ button.close:hover {
     height: 100%;
     overflow: auto;
     outline: none;
+    padding: 5px;
+    margin-bottom: -5px;
 }
 
 svg {
@@ -182,3 +206,4 @@ path {
     stroke-width: 2;
     stroke-linejoin: bevel;
 }
+

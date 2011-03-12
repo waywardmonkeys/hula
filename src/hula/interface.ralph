@@ -19,15 +19,32 @@
 
 (define-class <view> (<component>)
   header
+  icon
   label
   content)
 
-(define-function initialize ((view <view>))
-  (bind ((resizer (make <resizer>
+(define-function initialize ((view <view>) #key label)
+  (bind ((element (set! (get view "element")
+                        (create-element "div" class: "view")))
+         (header (set! (get view "header")
+                       (create-element "div" class: "header")))
+         (icon (set! (get view "icon")
+                     (create-element "div" class: "icon")))
+         (label-element (set! (get view "label")
+                              (create-element "label")))
+         (content (set! (get view "content")
+                        (create-element "div" class: "content")))
+         (resizer (make <resizer>
                         min-width: 100
                         min-height: 100))
          (closer (make <closer>))
          (dragger (make <dragger> element: (get view "header"))))
+    (append-child header icon)
+    (append-child header label-element)
+    (append-child element header)
+    (append-child element content)
+    (set! (header-label view) label)
+    (set! (icon-visibility view) #f)
     (attach resizer view)
     (attach closer view)
     (attach dragger view)))
@@ -45,50 +62,41 @@
 (define-function (setter header-label) ((view <view>) label)
   (set! (js:get-property view "label" "innerHTML") label))
 
+(define-function (setter icon-visibility) ((view <view>) visible?)
+  (set! (js:get-property view "icon" "style" "display")
+        (if visible? "inline-block" "none")))
+
+(define-function (setter icon) ((view <view>) name)
+  (set! (js:get-property view "icon" "className")
+        (concatenate "icon " name)))
+
 ;; window
 
 (define-class <window> (<view>))
 
 (define-function initialize ((window <window>) #key label)
-  (bind ((element (set! (get window "element")
-                        (create-element "div" class: "window")))
-         (header (set! (get window "header")
-                       (create-element "div" class: "header")))
-         (label-element (set! (get window "label")
-                      (create-element "label")))
-         (content (set! (get window "content")
-                        (create-element "div" class: "content")))
-         (footer  (set! (get window "footer")
-                        (create-element "div" class: "footer"))))
-    (append-child header label-element)
-    (append-child element header)
-    (append-child element content)
-    (append-child element footer)
-    (set! (header-label window) label))
-  (next-method window))
+  (next-method window label: label)
+  (bind ((element (get window "element"))
+         (footer (set! (get window "footer")
+                       (create-element "div" class: "footer"))))
+    (add-class element "window")
+    (append-child element footer)))
 
 ;; note
 
 (define-class <note> (<view>))
 
 (define-function initialize ((note <note>) #key label text)
-  (bind ((element (set! (get note "element")
-                        (create-element "div" class: "note")))
-         (header (set! (get note "header")
-                       (create-element "div" class: "header")))
-         (label-element (set! (get note "label")
-                      (create-element "label")))
-         (content (set! (get note "content")
-                        (create-element "div" class: "content")))
+  (next-method note label: label)
+  (bind ((element (get note "element"))
+         (content (get note "content"))
          (text-element (set! (get note "text")
                              (create-element "textarea"))))
-    (append-child header label-element)
-    (append-child element header)
+    (add-class element "note")
     (append-child content text-element)
-    (append-child element content)
-    (set! (header-label note) label)
     (set! (note-text note) text))
-  (next-method note))
+  (set! (icon-visibility note) #t)
+  (set! (icon note) "note"))
 
 (define-function note-text ((note <note>))
   (js:get-property note "text" "innerHTML"))
@@ -322,4 +330,18 @@
 
 (define-function initialize ((window <search-window>))
   (next-method window)
-  (set! (header-label window) "Search"))
+  (bind ((footer-label-element
+          (set! (get window "footer-label")
+                (create-element "label"))))
+    (append-child (get window "footer")
+                  footer-label-element))
+  (set! (icon-visibility window) #t)
+  (set! (icon window) "search")
+  (set! (header-label window) "Search")
+  (set! (footer-label window) "0 Results"))
+
+(define-function footer-label ((window <search-window>))
+  (js:get-property window "footer-label" "innerHTML"))
+
+(define-function (setter footer-label) ((window <search-window>) label)
+  (set! (js:get-property window "footer-label" "innerHTML") label))
