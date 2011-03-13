@@ -2,6 +2,8 @@
   import: (runtime/core toolbox/dom hula/interface)
   export: (main))
 
+(define body (js:get-property document "body"))
+
 (define-function main ()
   (log "HULA")
   (bind ((menu (make <context-menu>))
@@ -13,26 +15,22 @@
                       source: editor
                       target: note
                       offset: 50)))
-        (do (rcurry attach (js:get-property document "body"))
-            (make-array editor window note arrow))
-        (set! (view-position editor)
-              (make-array 100 100))
-        (set! (view-position note)
-              (make-array 250 200))
+        (do (rcurry attach body)
+            [editor window note arrow])
+        (set! (view-position editor) [100 100])
+        (set! (view-position note) [250 200])
         (add-item menu "Search"
                   (method (event)
                     (bind ((search (make <search-window>)))
                       (set! (view-position search)
-                            (make-array (- (js:get-property event "clientX") 10)
-                                        (- (js:get-property event "clientY") 10)))
-                      (attach search
-                              (js:get-property document "body")))))
+                            [(- (js:get-property event "clientX") 10)
+                             (- (js:get-property event "clientY") 10)])
+                      (attach search body))))
         (add-item menu "Libraries"
                   (method (event)
                     (bind ((browser (make <browser> type: "library")))
                       (set! (view-position browser)
-                            (make-array (- (js:get-property event "clientX") 10)
-                                        (- (js:get-property event "clientY") 10)))
-                      (attach browser
-                              (js:get-property document "body")))))
+                            [(- (js:get-property event "clientX") 10)
+                             (- (js:get-property event "clientY") 10)])
+                      (attach browser body))))
         (attach menu document)))

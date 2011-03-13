@@ -159,7 +159,7 @@
                     (click (event)
                       (do (method (type)
                             (add-listener view-element type finished #f))
-                          (make-array "webkitTransitionEnd" "transitionend"))
+                          ["webkitTransitionEnd" "transitionend"])
                       (add-class view-element "closed")))
       (add-listener element "click" click #f))))
 
@@ -272,21 +272,19 @@
   (js:var points (if behind?
                      (bind ((start-x* (- (+ start-x (element-width source-element)) 5))
                             (middle (round (+ start-x* (/ (abs (- end-x start-x*)) 2)))))
-                       (make-array
-                        (make-array start-x* start-y*)
-                        (make-array middle start-y*)
-                        (make-array middle end-y*)
-                        (make-array end-x end-y*)))
+                       [[start-x* start-y*]
+                        [middle start-y*]
+                        [middle end-y*]
+                        [end-x end-y*]])
                      (bind ((end-x* (+ end-x (element-width target-element)))
                             (middle (round (+ end-x* (/ (abs (- end-x* start-x)) 2)))))
-                       (make-array
-                        (make-array (+ start-x 5) start-y*)
-                        (make-array middle start-y*)
-                        (make-array middle end-y*)
-                        (make-array end-x* end-y*)))))
+                       [[(+ start-x 5) start-y*]
+                        [middle start-y*]
+                        [middle end-y*]
+                        [end-x* end-y*]])))
   (js:var points* (map (method (point)
-                         (make-array (- (first point) left)
-                                     (- (second point) top)))
+                         [(- (first point) left)
+                          (- (second point) top)])
                        points))
   (set! (attribute path "d")
         (concatenate "M" (join (map (rcurry join ",") points*) "L"))))
