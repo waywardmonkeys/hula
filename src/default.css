@@ -221,16 +221,22 @@ button.close:hover {
     background: url(images/search.png);
 }
 
-.view.search section {
+.view.search section:first-child {
     padding: 5px;
     background: #eee;
 }
 
 .view.search ul {
     border-top: 1px solid #BDBDBD;
+    list-style-type: none;
 }
 
-.view.search section input {
+.view.search li {
+    padding: 5px;
+    border-bottom: 1px solid #CCC;
+}
+
+.view.search input {
     width: 100%
 }
 
@@ -251,6 +257,8 @@ path {
     stroke-width: 2;
     stroke-linejoin: bevel;
 }
+
+/* editor */
 
 .view.editor div.editor {
     height: 100%;
