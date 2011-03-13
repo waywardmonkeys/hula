@@ -4,23 +4,27 @@
 
 (define-function main ()
   (log "HULA")
-  (bind ((window (make <window> label: "Test"))
+  (bind ((menu (make <context-menu>))
          (editor (make <editor-window>))
          (note (make <note>
                      label: "Todo"
                      text: "Simple test"))
-         (search (make <search-window>))
          (arrow (make <arrow>
                       source: editor
                       target: note
                       offset: 50)))
         (do (rcurry attach (js:get-property document "body"))
-            (make-array editor window note arrow search))
+            (make-array editor window note arrow))
         (set! (view-position editor)
               (make-array 100 100))
         (set! (view-position note)
               (make-array 250 200))
-        (set! (view-position search)
-              (make-array 400 100))
-        (set! (view-position window)
-              (make-array 400 400))))
+        (add-item menu "Search"
+                  (method (event)
+                    (bind ((search (make <search-window>)))
+                      (set! (view-position search)
+                            (make-array (js:get-property event "clientX")
+                                        (js:get-property event "clientY")))
+                      (attach search
+                              (js:get-property document "body")))))
+        (attach menu document)))
