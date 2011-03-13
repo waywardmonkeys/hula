@@ -299,7 +299,7 @@ menu.active {
 
 menu command {
     padding: 3px 7px;
-    display: inline-block;
+    display: block;
     cursor: default;
 }
 
