@@ -320,6 +320,10 @@
   (set! (header-label window) "Search")
   (set! (footer-label window) "0 Results"))
 
+(define-function attach ((window <search-window>) element)
+  (next-method window element)
+  (focus (get window "input")))
+
 (define-function footer-label ((window <search-window>))
   (js:get-property window "footer-label" "innerHTML"))
 
