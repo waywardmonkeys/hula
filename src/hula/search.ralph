@@ -1,0 +1,10 @@
+(define-module search
+  import: (runtime/core
+           toolbox/request toolbox/serialization)
+  export: (search))
+
+(define-function search (query callback)
+  (bind ((request (make <request> url: "/api/search/"
+                        callback: (method (data)
+                                    (callback (decode-json data))))))
+    (send request)))
