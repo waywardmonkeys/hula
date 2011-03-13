@@ -1,6 +1,6 @@
 (define-module interface
   import: (runtime/core runtime/watch
-           toolbox/dom)
+           toolbox/dom hula/search)
   export: (<window> <resizer>))
 
 ;; component
@@ -331,10 +331,18 @@
   (set! (js:get-property window "footer-label" "innerHTML") label))
 
 (define-function initiate-search ((window <search-window>))
-  (log "search:" (get window "input" "value"))
-  (bind ((element (get window "element")))
-    (animate element (method ()
-                       (set! (element-height element) 300)))))
+  (bind ((query (get window "input" "value")))
+    ;; TODO: show activity
+    (search query
+            (method (results)
+              (bind ((element (get window "element")))
+                (animate element (method ()
+                                   ;; TODO: calculate sensible height
+                                   (set! (element-height element) 300))))
+              ;; TODO:
+              ;; - save results in window
+              ;; - add each result as component
+              (log "results:" results)))))
 
 ;; editor component
 
