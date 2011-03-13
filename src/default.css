@@ -284,7 +284,6 @@ menu {
     -moz-transition-property: opacity;
     -webkit-transition-duration: 200ms;
     -moz-transition-duration: 200ms;
-    padding: 5px;
     background: white;
     border: 1px solid #c4c4c4;
     border-radius: 5px;
@@ -293,9 +292,21 @@ menu {
 menu.active {
     opacity: 1;
     display: block;
-    -webkit-box-shadow: 0 1px 10px rgba(0, 0, 0, 0.3);
-    -moz-box-shadow: 0 1px 10px rgba(0, 0, 0, 0.3);
+    -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    padding: 3px 0;
 }
+
+menu command {
+    padding: 3px 7px;
+    display: inline-block;
+    cursor: default;
+}
+
+menu command:hover {
+    background: #ddd;
+}
+
 
 
 /* separator: #ddd */
