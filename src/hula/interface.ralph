@@ -327,16 +327,10 @@
   (set! (js:get-property window "footer-label" "innerHTML") label))
 
 (define-function initiate-search ((window <search-window>))
-  (log "SEARCH!")
+  (log "search:" (get window "input" "value"))
   (bind ((element (get window "element")))
-    (add-class element "searching")
-    (do (method (type)
-          (add-listener element type
-                        (method ()
-                          (remove-class element "searching"))
-                        #f))
-        (make-array "webkitTransitionEnd" "transitionend"))
-    (set! (element-height element) 300)))
+    (animate element (method ()
+                       (set! (element-height element) 300)))))
 
 ;; editor component
 

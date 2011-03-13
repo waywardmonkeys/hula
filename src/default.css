@@ -44,11 +44,12 @@ svg {
     -moz-transform: scale(0.5);
 }
 
-.view.search.searching {
+.view.search.animating {
     -webkit-transition-property: width, height;
     -moz-transition-property: width, height;
     -webkit-transition-duration: 300ms;
     -moz-transition-duration: 300ms;
+    -webkit-transition-timing-function: ease-in-out;
 }
 
 .view > * {
