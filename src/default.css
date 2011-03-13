@@ -60,7 +60,7 @@ svg {
 
 .view .header {
     border-radius: 5px 5px 0 0;
-    height: 18px;
+    height: 20px;
     padding: 0 5px;
     top: 0;
 }
@@ -84,7 +84,7 @@ svg {
 }
 
 .view .content {
-    top: 18px;
+    top: 20px;
     bottom: 16px;
 }
 
@@ -148,9 +148,9 @@ button {
 
 button.close {
     z-index: 1000;
-    top: 2px;
+    top: 3px;
     left: auto;
-    right: 2px;
+    right: 3px;
     border: none;
     width: 14px;
     height: 14px;
@@ -212,7 +212,7 @@ button.close:hover {
 /* search */
 
 .view.search {
-    min-height: 64px;
+    min-height: 67px;
     min-width: 150px;
 }
 
