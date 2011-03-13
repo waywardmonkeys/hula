@@ -257,6 +257,11 @@ path {
     overflow: auto;
 }
 
+div.editor .CodeMirror,
+div.editor .CodeMirror-gutter {
+    height: 100% !important;
+}
+
 .CodeMirror-gutter {
     overflow: hidden;
 }
