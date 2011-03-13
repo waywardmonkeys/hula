@@ -27,4 +27,12 @@
                                         (- (js:get-property event "clientY") 10)))
                       (attach search
                               (js:get-property document "body")))))
+        (add-item menu "Libraries"
+                  (method (event)
+                    (bind ((browser (make <browser> type: "library")))
+                      (set! (view-position browser)
+                            (make-array (- (js:get-property event "clientX") 10)
+                                        (- (js:get-property event "clientY") 10)))
+                      (attach browser
+                              (js:get-property document "body")))))
         (attach menu document)))

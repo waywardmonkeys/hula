@@ -423,3 +423,28 @@
     (set! (attribute command "label") label)
     (set! (js:get-property command "innerHTML") label)
     (add-listener command "click" function)))
+
+;; browser
+
+(define-class <type> ()
+  identifier
+  collection-identifier
+  name
+  collection-name)
+
+(define *types*
+  (make-object
+   "library" (make <type>
+                   identifier: "library"
+                   collection: "libraries"
+                   name: "Library"
+                   collection-name: "Libraries")))
+
+(define-class <browser> (<window>))
+
+(define-function initialize ((window <browser>) #key type)
+  (next-method window)
+  (add-class (get window "element") "browser")
+  (set! (header-label window)
+        (get *types* type "collection-name")))
+
