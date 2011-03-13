@@ -1,13 +1,13 @@
 var require;
 
+function _e (exports, _code) {
+    eval(_code);
+}
+
 (function () {
      var modules = {};
      var requests = 0;
      var deferredCallbacks = [];
-
-     function e (exports, code) {
-	 eval(code);
-     }
 
      function request (name, callback) {
 	 var req = new XMLHttpRequest();
@@ -17,7 +17,7 @@ var require;
 		 if (req.status == 200) {
 		     var currentRequests = requests;
 		     var exports = {};
-		     e(exports, req.responseText);
+		     _e(exports, req.responseText);
 		     modules[name] = exports;
 		     deferredCallbacks
 			 .unshift(function() {
