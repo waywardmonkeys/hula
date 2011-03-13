@@ -265,3 +265,29 @@ div.editor .CodeMirror-gutter {
 .CodeMirror-gutter {
     overflow: hidden;
 }
+
+/* menu */
+
+menu {
+    position: absolute;
+    display: none;
+    opacity: 0;
+    -webkit-transition-property: opacity;
+    -moz-transition-property: opacity;
+    -webkit-transition-duration: 200ms;
+    -moz-transition-duration: 200ms;
+    padding: 5px;
+    background: white;
+    border: 1px solid #c4c4c4;
+    border-radius: 5px;
+}
+
+menu.active {
+    opacity: 1;
+    display: block;
+    -webkit-box-shadow: 0 1px 10px rgba(0, 0, 0, 0.3);
+    -moz-box-shadow: 0 1px 10px rgba(0, 0, 0, 0.3);
+}
+
+
+/* separator: #ddd */

@@ -366,4 +366,52 @@
     (append-child (get window "content")
                   (get editor "element"))))
 
+;; context menu
 
+(define-class <context-menu> (<component>))
+
+(define-function initialize ((component <context-menu>) #key entries)
+   (bind ((element (set! (get component "element")
+                         (create-element "menu"))))
+    (set! (attribute element "type") "context")))
+
+(define-function attach ((component <context-menu>) element)
+  (bind ((menu (get component "element"))
+         (element (if (instance? element <component>)
+                      (get element "element")
+                      element)))
+    (append-child (if (== element document)
+                      (js:get-property document "body")
+                      element)
+                  menu)
+    (bind-methods ((show (event)
+                     (set! (element-left menu)
+                           (js:get-property event "clientX"))
+                     (set! (element-top menu)
+                           (js:get-property event "clientY"))
+                     (add-class menu "active")
+                     (prevent-default event)
+                     (stop-propagation event))
+                   (hide (event)
+                     (unless (and (== (element-left menu)
+                                      (js:get-property event "clientX"))
+                                  (== (element-top menu)
+                                      (js:get-property event "clientY")))
+                     (remove-class menu "active"))))
+      (add-listener element "contextmenu"
+                    (if (== element document)
+                        (method (event)
+                          (when (== (js:get-property event "target")
+                                    (js:get-property document "body"
+                                                     "parentNode"))
+                            (show event)))
+                        show))
+      (add-listener document "click" hide))))
+
+(define-function add-item ((component <context-menu>) label function)
+  (bind ((menu (get component "element"))
+         (command (create-element "command"
+                                  parent: menu)))
+    (set! (attribute command "label") label)
+    (set! (js:get-property command "innerHTML") label)
+    (add-listener command "click" function)))
