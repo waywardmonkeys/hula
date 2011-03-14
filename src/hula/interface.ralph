@@ -425,24 +425,39 @@
 ;; browser
 
 (define-class <type> ()
-  identifier
-  collection-identifier
-  name
+  single
+  collection
+  single-name
   collection-name)
 
 (define *types*
   (make-object
    "library" (make <type>
-                   identifier: "library"
+                   single: "library"
                    collection: "libraries"
-                   name: "Library"
+                   single-name: "Library"
                    collection-name: "Libraries")))
 
 (define-class <browser> (<window>))
 
 (define-function initialize ((window <browser>) #key type)
   (next-method window)
-  (add-class (get window "element") "browser")
-  (set! (header-label window)
-        (get *types* type "collection-name")))
-
+  (bind ((results (set! (get window "results")
+                        (create-element "ul"
+                                        parent: (get window "content"))))
+         (collection (get *types* type "collection"))
+         (collection-name (get *types* type "collection-name")))
+    (bind-methods ((add-result (name)
+                     (bind ((item (create-element "li" parent: results)))
+                        (set! (js:get-property item "innerHTML") name))))
+      (bind ((request (make <request> url: (concatenate "/api/" collection)
+                            callback: (method (data)
+                                        (do add-result
+                                            (decode-json data))))))
+        (add-class (get window "element")
+                   "browser")
+        (add-class (get window "element")
+                   collection)
+        (set! (header-label window)
+              collection-name)
+        (send request)))))

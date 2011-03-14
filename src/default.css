@@ -16,7 +16,16 @@ body {
 svg {
     position: absolute;
     z-index: -1000;
+    border: 1px solid red;
 }
+
+path {
+    stroke: #555;
+    fill: none;
+    stroke-width: 2;
+    stroke-linejoin: bevel;
+}
+
 
 /* view */
 
@@ -86,6 +95,7 @@ svg {
 .view .content {
     top: 20px;
     bottom: 16px;
+    overflow: auto;
 }
 
 .view .resizer {
@@ -212,7 +222,7 @@ button.close:hover {
 /* search */
 
 .view.search {
-    min-height: 67px;
+    min-height: 68px;
     min-width: 150px;
 }
 
@@ -246,19 +256,6 @@ button.close:hover {
     display: inline-block;
     background: url(images/editor.png);
 }
-
-svg {
-    border: 1px solid red;
-}
-
-path {
-    stroke: #555;
-    fill: none;
-    stroke-width: 2;
-    stroke-linejoin: bevel;
-}
-
-/* editor */
 
 .view.editor div.editor {
     height: 100%;
@@ -307,6 +304,18 @@ menu command:hover {
     background: #ddd;
 }
 
+/* browser */
 
+.view.browser {
+    min-height: 150px;
+    min-width: 150px;
+}
 
-/* separator: #ddd */
+.view.browser li {
+    padding: 2px 5px;
+}
+
+.view.browser.libraries .header .icon {
+    display: inline-block;
+    background: url(images/library.png);
+}
