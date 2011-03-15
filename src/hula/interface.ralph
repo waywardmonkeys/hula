@@ -158,8 +158,9 @@
     (bind-methods ((finished (event)
                      (when closing?
                        (delete-element view-element)
-                       (trigger view (make-event "close"))))
+                       (trigger-event view (make-event "close"))))
                     (click (event)
+                      (set! closing? #t)
                       (do (method (type)
                             (add-listener view-element type finished #f))
                           ["webkitTransitionEnd" "transitionend"])
