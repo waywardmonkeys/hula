@@ -2,12 +2,9 @@
   import: (runtime/core toolbox/dom hula/interface)
   export: (main))
 
-(define body (js:get-property document "body"))
-
 (define-function main ()
   (log "HULA")
   (bind ((workspace (make <workspace>))
-         (menu (make <context-menu>))
          (editor (make <editor-window>))
          (note (make <note>
                      label: "Todo"
@@ -19,20 +16,6 @@
         (do (rcurry attach body)
             [workspace editor window note])
         (attach arrow workspace)
-        (attach menu workspace)
+        (attach *context-menu* workspace)
         (set! (view-position editor) [100 100])
-        (set! (view-position note) [250 200])
-        (set! (get workspace "context-menu-items")
-              (make-object
-               "Search" (method (event)
-                          (bind ((search (make <search-window>)))
-                            (set! (view-position search)
-                                  [(- (js:get-property event "clientX") 10)
-                                  (- (js:get-property event "clientY") 10)])
-                            (attach search body)))
-               "Libraries" (method (event)
-                             (bind ((browser (make <browser> type: "library")))
-                               (set! (view-position browser)
-                                     [(- (js:get-property event "clientX") 10)
-                                     (- (js:get-property event "clientY") 10)])
-                               (attach browser body)))))))
+        (set! (view-position note) [250 200])))

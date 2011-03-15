@@ -1,7 +1,7 @@
 (define-module interface
   import: (runtime/core runtime/watch
            toolbox/dom hula/search)
-  export: (<window> <resizer>))
+  export: (<window> <resizer> *context-menu*))
 
 ;; component
 
@@ -386,6 +386,10 @@
                          (create-element "menu"))))
     (set! (attribute element "type") "context")))
 
+(define *context-menu* (make <context-menu>))
+
+(define-generic context-menu-items (object))
+
 (define-function attach ((menu <context-menu>) target)
   (bind ((element (get menu "element"))
          (target-element (if (instance? target <component>)
@@ -393,8 +397,7 @@
                              target)))
     ;; menu is only added once to document.body
     (unless (parent-element element)
-      (append-child (js:get-property document "body")
-                    element)
+      (append-child body element)
       (add-listener document "click"
                     (method (event)
                       (unless (and (== (js:get-property event "clientX")
@@ -402,6 +405,7 @@
                                    (== (js:get-property event "clientY")
                                        (get menu "y")))
                         (remove-class element "active")))))
+    (log "attaching context-menu to:" target-element)
     (add-listener target-element "contextmenu"
                   (curry show-menu menu target))))
 
@@ -411,7 +415,7 @@
          (y (set! (get menu "y")
                   (js:get-property event "clientY")))
          (element (get menu "element"))
-         (items (or (get target "context-menu-items") [])))
+         (items (or (context-menu-items target) [])))
   ;; set position
   (set! (element-left element)
         (+ x 5))
@@ -485,6 +489,21 @@
   (set! (get workspace "element")
         (create-element "div" class: "workspace")))
 
+(define-function context-menu-items ((workspace <workspace>))
+  (make-object
+   "Search" (method (event)
+              (bind ((search (make <search-window>)))
+                    (set! (view-position search)
+                          [(- (js:get-property event "clientX") 10)
+                          (- (js:get-property event "clientY") 10)])
+                    (attach search body)))
+   "Libraries" (method (event)
+                 (bind ((browser (make <browser> type: "library")))
+                       (set! (view-position browser)
+                             [(- (js:get-property event "clientX") 10)
+                             (- (js:get-property event "clientY") 10)])
+                       (attach browser body)))))
+
 ;; spinner
 
 (define-class <spinner> (<component>))
@@ -506,10 +525,20 @@
   identifier
   name)
 
-(define-function initialize ((object <environment-object>) #rest rest #key name)
+(define-function initialize ((object <environment-object>)
+                             #rest rest #key name type)
   (apply next-method object rest)
   (bind ((element (set! (get object "element")
                         (create-element "div" class: "object"))))
     (add-class element type)
-    (set! (js:get-property element "innerHTML") name)))
+    (set! (js:get-property element "innerHTML") name))
+  (attach *context-menu* object))
 
+(define-function context-menu-items ((object <environment-object>))
+  (make-object
+   "Modules" (method (event)
+               (bind ((browser (make <browser> type: "module")))
+                     (set! (view-position browser)
+                           [(- (js:get-property event "clientX") 10)
+                            (- (js:get-property event "clientY") 10)])
+                     (attach browser body)))))
