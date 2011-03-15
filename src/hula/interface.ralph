@@ -400,20 +400,19 @@
       (append-child body element)
       (add-listener document "click"
                     (method (event)
-                      (unless (and (== (js:get-property event "clientX")
+                      (unless (and (== (js:get-property event "pageX")
                                        (get menu "x"))
-                                   (== (js:get-property event "clientY")
+                                   (== (js:get-property event "pageY")
                                        (get menu "y")))
                         (remove-class element "active")))))
-    (log "attaching context-menu to:" target-element)
     (add-listener target-element "contextmenu"
                   (curry show-menu menu target))))
 
 (define-function show-menu ((menu <context-menu>) target event)
   (bind ((x (set! (get menu "x")
-                  (js:get-property event "clientX")))
+                  (js:get-property event "pageX")))
          (y (set! (get menu "y")
-                  (js:get-property event "clientY")))
+                  (js:get-property event "pageY")))
          (element (get menu "element"))
          (items (or (context-menu-items target) [])))
   ;; set position
