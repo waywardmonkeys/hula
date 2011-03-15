@@ -442,8 +442,10 @@
          (collection-name (get *types* type "collection-name")))
     (attach spinner content)
     (bind-methods ((add-result (name)
-                     (bind ((item (create-element "li" parent: results)))
-                        (set! (js:get-property item "innerHTML") name))))
+                     (bind ((item (create-element "li" parent: results))
+                            (object (make <environment-object> type: type
+                                          name: name identifier: name)))
+                        (attach object item))))
       (show spinner)
       (bind ((request (make <request> url: (concatenate "/api/" collection)
                             callback: (method (data)
@@ -479,3 +481,18 @@
 
 (define-function hide ((spinner <spinner>))
   (remove-class (get spinner "element") "active"))
+
+;; environment object
+
+(define-class <environment-object> (<component>)
+  type
+  identifier
+  name)
+
+(define-function initialize ((object <environment-object>) #rest rest #key name)
+  (apply next-method object rest)
+  (bind ((element (set! (get object "element")
+                        (create-element "div" class: "object"))))
+    (add-class element type)
+    (set! (js:get-property element "innerHTML") name)))
+
