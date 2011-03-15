@@ -319,3 +319,15 @@ menu command:hover {
     display: inline-block;
     background: url(images/library.png);
 }
+
+/* workspace */
+
+.workspace {
+    z-index: -1000;
+    display: block;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+}

@@ -11,7 +11,10 @@
 (define-generic attach (component target))
 
 (define-function attach ((component <component>) element)
-  (append-child element (get component "element")))
+  (append-child (if (instance? element <component>)
+                    (get element "element")
+                    element)
+                (get component "element")))
 
 (define-generic update (component))
 
@@ -101,11 +104,11 @@
     (add-class element "dragger")))
 
 (define-function attach ((dragger <dragger>) (view <view>))
+  (next-method dragger view)
   (bind ((view-element (get view "element"))
          (element (get dragger "element"))
          (start-x) (start-y)
          (start-left) (start-top))
-    (append-child view-element element)
     (bind-methods ((move (event)
                      (bind ((x (js:get-property event "clientX"))
                             (y (js:get-property event "clientY"))
@@ -148,10 +151,10 @@
     (add-class element "close")))
 
 (define-function attach ((closer <closer>) (view <view>))
+  (next-method closer view)
   (bind ((view-element (get view "element"))
          (element (get closer "element"))
          (closing? #f))
-    (append-child view-element element)
     (bind-methods ((finished (event)
                      (when closing?
                        (delete-element view-element)
@@ -173,12 +176,12 @@
     (add-class element "resizer")))
 
 (define-function attach ((resizer <resizer>) (view <view>))
+  (next-method resizer view)
   (bind ((view-element (get view "element"))
          (element (get resizer "element"))
          (start-x) (start-y)
          (start-width) (start-height))
     (set! (get view "resizer") resizer)
-    (append-child view-element element)
     (bind-methods ((move (event)
                      (bind ((x (js:get-property event "clientX"))
                             (y (js:get-property event "clientY"))
@@ -381,14 +384,10 @@
                          (create-element "menu"))))
     (set! (attribute element "type") "context")))
 
-(define-function attach ((component <context-menu>) element)
+(define-function attach ((component <context-menu>) target)
   (bind ((menu (get component "element"))
-         (element (if (instance? element <component>)
-                      (get element "element")
-                      element)))
-    (append-child (if (== element document)
-                      (js:get-property document "body")
-                      element)
+         (element (get target "element")))
+    (append-child (js:get-property document "body")
                   menu)
     (bind-methods ((show (event)
                      (set! (element-left menu)
@@ -404,14 +403,7 @@
                                   (== (element-top menu)
                                       (js:get-property event "clientY")))
                      (remove-class menu "active"))))
-      (add-listener element "contextmenu"
-                    (if (== element document)
-                        (method (event)
-                          (when (== (js:get-property event "target")
-                                    (js:get-property document "body"
-                                                     "parentNode"))
-                            (show event)))
-                        show))
+      (add-listener element "contextmenu" show)
       (add-listener document "click" hide))))
 
 (define-function add-item ((component <context-menu>) label function)
@@ -461,3 +453,15 @@
         (set! (header-label window)
               collection-name)
         (send request)))))
+
+;; workspace
+
+(define-class <workspace> (<component>))
+
+(define-function initialize ((workspace <workspace>))
+  (set! (get workspace "element")
+        (create-element "div" class: "workspace")))
+
+
+
+
