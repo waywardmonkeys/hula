@@ -321,6 +321,11 @@ menu command:hover {
     background: url(images/library.png);
 }
 
+.view.browser.modules .header .icon {
+    display: inline-block;
+    background: url(images/module.png);
+}
+
 /* workspace */
 
 .workspace {
@@ -352,4 +357,10 @@ menu command:hover {
 .spinner.active {
     opacity: 1;
     background: url(images/spinner.gif) no-repeat center center;
+}
+
+/* object */
+
+.object {
+    pointer: default
 }
