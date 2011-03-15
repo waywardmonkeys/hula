@@ -378,41 +378,58 @@
 
 ;; context menu
 
-(define-class <context-menu> (<component>))
+(define-class <context-menu> (<component>)
+  x y)
 
 (define-function initialize ((component <context-menu>) #key entries)
    (bind ((element (set! (get component "element")
                          (create-element "menu"))))
     (set! (attribute element "type") "context")))
 
-(define-function attach ((component <context-menu>) target)
-  (bind ((menu (get component "element"))
-         (element (get target "element"))
-         (x) (y))
-    (append-child (js:get-property document "body")
-                  menu)
-    (bind-methods ((show (event)
-                     (set! x (js:get-property event "clientX"))
-                     (set! y (js:get-property event "clientY"))
-                     (set! (element-left menu) (+ x 5))
-                     (set! (element-top menu) (- y 10))
-                     (add-class menu "active")
-                     (prevent-default event)
-                     (stop-propagation event))
-                   (hide (event)
-                     (unless (and (== (js:get-property event "clientX") x)
-                                  (== (js:get-property event "clientY") y))
-                       (remove-class menu "active"))))
-      (add-listener element "contextmenu" show)
-      (add-listener document "click" hide))))
+(define-function attach ((menu <context-menu>) target)
+  (bind ((element (get menu "element"))
+         (target-element (if (instance? target <component>)
+                             (get target "element")
+                             target)))
+    ;; menu is only added once to document.body
+    (unless (parent-element element)
+      (append-child (js:get-property document "body")
+                    element)
+      (add-listener document "click"
+                    (method (event)
+                      (unless (and (== (js:get-property event "clientX")
+                                       (get menu "x"))
+                                   (== (js:get-property event "clientY")
+                                       (get menu "y")))
+                        (remove-class element "active")))))
+    (add-listener target-element "contextmenu"
+                  (curry show-menu menu target))))
 
-(define-function add-item ((component <context-menu>) label function)
-  (bind ((menu (get component "element"))
-         (command (create-element "command"
-                                  parent: menu)))
-    (set! (attribute command "label") label)
-    (set! (js:get-property command "innerHTML") label)
-    (add-listener command "click" function)))
+(define-function show-menu ((menu <context-menu>) target event)
+  (bind ((x (set! (get menu "x")
+                  (js:get-property event "clientX")))
+         (y (set! (get menu "y")
+                  (js:get-property event "clientY")))
+         (element (get menu "element"))
+         (items (or (get target "context-menu-items") [])))
+  ;; set position
+  (set! (element-left element)
+        (+ x 5))
+  (set! (element-top element)
+        (- y 10))
+  ;; populate entries
+  (delete-children element)
+  (do (method (label)
+        (bind ((command (create-element "command" parent: element)))
+          (set! (attribute command "label") label)
+          (set! (js:get-property command "innerHTML") label)
+          (add-listener command "click" (get items label))))
+      (keys items))
+  ;; show menu
+  (add-class element "active")
+  ;; prevent default menu
+  (prevent-default event)
+  (stop-propagation event)))
 
 ;; browser
 
