@@ -434,16 +434,20 @@
 
 (define-function initialize ((window <browser>) #key type)
   (next-method window)
-  (bind ((results (set! (get window "results")
-                        (create-element "ul"
-                                        parent: (get window "content"))))
+  (bind ((spinner (make <spinner>))
+         (content (get window "content"))
+         (results (set! (get window "results")
+                        (create-element "ul" parent: content)))
          (collection (get *types* type "collection"))
          (collection-name (get *types* type "collection-name")))
+    (attach spinner content)
     (bind-methods ((add-result (name)
                      (bind ((item (create-element "li" parent: results)))
                         (set! (js:get-property item "innerHTML") name))))
+      (show spinner)
       (bind ((request (make <request> url: (concatenate "/api/" collection)
                             callback: (method (data)
+                                        (hide spinner)
                                         (do add-result
                                             (decode-json data))))))
         (add-class (get window "element")
@@ -462,6 +466,16 @@
   (set! (get workspace "element")
         (create-element "div" class: "workspace")))
 
+;; spinner
 
+(define-class <spinner> (<component>))
 
+(define-function initialize ((spinner <spinner>))
+  (set! (get spinner "element")
+        (create-element "div" class: "spinner")))
 
+(define-function show ((spinner <spinner>))
+  (add-class (get spinner "element") "active"))
+
+(define-function hide ((spinner <spinner>))
+  (remove-class (get spinner "element") "active"))
