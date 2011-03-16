@@ -1,7 +1,7 @@
 (define-module interface
   import: (runtime/core runtime/watch
            toolbox/dom hula/search)
-  export: (<window> <resizer> *context-menu*))
+  export: (<window> <resizer> *context-menu* *workspace*))
 
 ;; component
 
@@ -221,22 +221,28 @@
   target
   offset)
 
-(define-function initialize ((arrow <arrow>) #key source target offset)
+(define-function initialize ((arrow <arrow>)
+                             #rest rest #key source target)
+  (apply next-method arrow rest)
   (bind ((element (set! (get arrow "element")
                         (create-svg-element "svg")))
          (path (set! (get arrow "path")
                      (create-svg-element "path")))
          (updater (curry update arrow)))
     (append-child element path)
-    (set! (get arrow "source") source)
-    (set! (get arrow "target") target)
-    (set! (get arrow "offset") offset)
     (add-listener source "move" updater)
     (add-listener source "resize" updater)
     (add-listener target "move" updater)
     (add-listener target "resize" updater)
     (watch arrow "source" updater)
     (watch arrow "target" updater)
+    ;; pass context-menu event to workspace
+    (add-listener element "contextmenu"
+                  (method (event)
+                    (trigger-event (get *workspace* "element")
+                                   event)
+                    (prevent-default event)
+                    (stop-propagation event)))
     (updater)))
 
 (define-function update ((arrow <arrow>))
@@ -499,6 +505,8 @@
 (define-function initialize ((workspace <workspace>))
   (set! (get workspace "element")
         (create-element "div" class: "workspace")))
+
+(define *workspace* (make <workspace>))
 
 (define-function context-menu-items ((workspace <workspace>))
   (make-object
