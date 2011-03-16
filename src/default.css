@@ -314,6 +314,7 @@ menu command:hover {
 
 .view.browser li {
     padding: 2px 5px;
+    white-space: nowrap;
 }
 
 .view.browser.libraries .header .icon {
