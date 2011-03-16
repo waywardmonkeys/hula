@@ -363,5 +363,5 @@ menu command:hover {
 /* object */
 
 .object {
-    pointer: default
+    cursor: default
 }
