@@ -299,6 +299,35 @@
   (set! (attribute path "d")
         (concatenate "M" (join (map (rcurry join ",") points*) "L"))))
 
+;;
+
+(define-class <search-field> (<component>))
+
+(define-function initialize ((component <search-field>))
+  (bind ((section (set! (get component "element")
+                        (create-element "section"
+                                        class: "search")))
+         (input (set! (get component "input")
+                      (create-element "input"
+                                      parent: section))))
+    (set! (attribute input "type") "search")))
+
+(define-function attach ((component <search-field>) (view <view>)
+                         #key instant?)
+  (insert-before (get component "element")
+                 (get view "content"))
+  (add-listener (get component "input") "keypress"
+                (method (event)
+                  (when (or (== (get event "keyCode") 13)
+                            instant?)
+                    (bind ((query (get component "input" "value")))
+                      (trigger-event component
+                                     (make-event "search"
+                                                 query: query)))))))
+
+(define-function focus ((component <search-field>))
+  (focus (get component "input")))
+
 ;; search
 
 (define-class <search-window> (<window>))
@@ -309,28 +338,24 @@
           (set! (get window "footer-label")
                 (create-element "label")))
          (content (get window "content"))
-         (section (create-element "section"
-                                  parent: content))
          (results (set! (get window "results")
                         (create-element "ul"
                                         parent: content)))
-         (input (set! (get window "input")
-                      (create-element "input"
-                                      parent: section))))
-    (append-child (get window "footer")
-                  footer-label-element)
-    (set! (attribute input "type") "search")
-    (add-listener input "keypress"
+         (search (set! (get window "search")
+                       (make <search-field>))))
+    (attach search window)
+    (add-listener search "search"
                   (method (event)
-                    (when (== (get event "keyCode") 13)
-                      (initiate-search window)))))
+                    (perform-search window (get event "query"))))
+    (append-child (get window "footer")
+                  footer-label-element))
   (add-class (get window "element") "search")
   (set! (header-label window) "Search")
   (set! (footer-label window) "0 Results"))
 
 (define-function attach ((window <search-window>) element)
   (next-method window element)
-  (focus (get window "input")))
+  (focus (get window "search")))
 
 (define-function footer-label ((window <search-window>))
   (js:get-property window "footer-label" "innerHTML"))
@@ -338,15 +363,13 @@
 (define-function (setter footer-label) ((window <search-window>) label)
   (set! (js:get-property window "footer-label" "innerHTML") label))
 
-(define-function initiate-search ((window <search-window>))
-  (bind ((query (get window "input" "value")))
-    ;; TODO: show activity
-    (search query
-            (method (results)
-              (bind ((element (get window "element")))
-                (animate element (method ()
-                                   ;; TODO: calculate sensible height
-                                   (set! (element-height element) 300))))
+(define-function perform-search ((window <search-window>) query)
+  (search query
+          (method (results)
+            (bind ((element (get window "element")))
+              (animate element (method ()
+                                 ;; TODO: calculate sensible height
+                                 (set! (element-height element) 300)))
               ;; TODO:
               ;; - save results in window
               ;; - add each result as component
@@ -473,8 +496,14 @@
          (results (set! (get window "results")
                         (create-element "ul" parent: content)))
          (collection (get *types* type "collection"))
-         (collection-name (get *types* type "collection-name")))
+         (collection-name (get *types* type "collection-name"))
+         (search (set! (get window "search")
+                       (make <search-field>))))
     (attach spinner content)
+    (attach search window)
+    (add-listener search "search"
+                  (method (event)
+                    (log "!!")))
     (bind-methods ((add-result (name)
                      (bind ((item (create-element "li" parent: results))
                             (object (make <environment-object> type: type
@@ -512,16 +541,16 @@
   (make-object
    "Search" (method (event)
               (bind ((search (make <search-window>)))
-                    (set! (view-position search)
-                          [(- (js:get-property event "pageX") 10)
-                          (- (js:get-property event "pageY") 10)])
-                    (attach search body)))
+                (set! (view-position search)
+                      [(- (js:get-property event "pageX") 10)
+                       (- (js:get-property event "pageY") 10)])
+                (attach search body)))
    "Libraries" (method (event)
                  (bind ((browser (make <browser> type: "library")))
-                       (set! (view-position browser)
-                             [(- (js:get-property event "pageX") 10)
-                             (- (js:get-property event "pageY") 10)])
-                       (attach browser body)))))
+                   (set! (view-position browser)
+                         [(- (js:get-property event "pageX") 10)
+                          (- (js:get-property event "pageY") 10)])
+                   (attach browser body)))))
 
 ;; spinner
 

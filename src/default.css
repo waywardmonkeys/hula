@@ -26,11 +26,12 @@ path {
     stroke-linejoin: bevel;
 }
 
-
 /* view */
 
 .view {
     position: absolute;
+    overflow: hidden;
+
     min-width: 100px;
     min-height: 100px;
     border-radius: 5px;
@@ -231,23 +232,13 @@ button.close:hover {
     background: url(images/search.png);
 }
 
-.view.search section:first-child {
-    padding: 5px;
-    background: #eee;
-}
-
 .view.search ul {
-    border-top: 1px solid #BDBDBD;
     list-style-type: none;
 }
 
 .view.search li {
     padding: 5px;
     border-bottom: 1px solid #CCC;
-}
-
-.view.search input {
-    width: 100%
 }
 
 /* editor */
@@ -363,5 +354,18 @@ menu command:hover {
 /* object */
 
 .object {
-    cursor: default
+    cursor: default;
+    font-family: Monaco, monospace;
+}
+
+/* search field */
+
+section.search {
+    padding: 5px;
+    background: #eee;
+    border-bottom: 1px solid #BDBDBD;
+}
+
+section.search input {
+    width: 100%
 }
