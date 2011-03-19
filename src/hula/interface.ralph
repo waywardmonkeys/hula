@@ -326,7 +326,7 @@
                                                  query: query)))))))
 
 (define-function focus ((component <search-field>))
-  (focus (get component "input")))
+  (focus-element (get component "input")))
 
 ;; search
 
