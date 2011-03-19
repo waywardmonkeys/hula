@@ -30,20 +30,23 @@
   (bind ((element (set! (get view "element")
                         (create-element "div" class: "view")))
          (header (set! (get view "header")
-                       (create-element "div" class: "header")))
+                       (create-element "div"
+                                       class: "header"
+                                       parent: element)))
          (icon (set! (get view "icon")
-                     (create-element "div" class: "icon")))
+                     (create-element "div"
+                                     class: "icon"
+                                     parent: header)))
          (label-element (set! (get view "label")
-                              (create-element "label")))
+                              (create-element "label"
+                                              parent: header)))
          (content (set! (get view "content")
-                        (create-element "div" class: "content")))
+                        (create-element "div"
+                                        class: "content"
+                                        parent: element)))
          (resizer (make <resizer>))
          (closer (make <closer>))
          (dragger (make <dragger> element: (get view "header"))))
-    (append-child header icon)
-    (append-child header label-element)
-    (append-child element header)
-    (append-child element content)
     (set! (header-label view) label)
     (attach resizer view)
     (attach closer view)
