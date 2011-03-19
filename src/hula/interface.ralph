@@ -102,12 +102,15 @@
 (define-class <dragger> (<component>))
 
 (define-function initialize ((dragger <dragger>) #key element)
+  (when element
+    (set! (get dragger "element-provided") #t))
   (bind ((element (set! (get dragger "element")
                         (or element (create-element "div")))))
     (add-class element "dragger")))
 
 (define-function attach ((dragger <dragger>) (view <view>))
-  (next-method dragger view)
+  (unless (get dragger "element-provided")
+    (next-method dragger view))
   (bind ((view-element (get view "element"))
          (element (get dragger "element"))
          (start-x) (start-y)
