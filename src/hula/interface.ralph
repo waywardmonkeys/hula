@@ -37,7 +37,8 @@
   label
   content)
 
-(define-function initialize ((view <view>) #key label)
+(define-function initialize ((view <view>) #rest rest #key label)
+  (apply next-method view rest)
   (bind ((element (set! (get view "element")
                         (create-element "div" class: "view")))
          (header (set! (get view "header")
@@ -80,8 +81,8 @@
 
 (define-class <window> (<view>))
 
-(define-function initialize ((window <window>) #key label)
-  (next-method window label: label)
+(define-function initialize ((window <window>) #rest rest #key label)
+  (apply next-method window rest)
   (bind ((element (get window "element"))
          (footer (set! (get window "footer")
                        (create-element "div" class: "footer"))))
@@ -504,7 +505,7 @@
 
 (define-class <browser> (<window>)
   type
-  objects)
+  (objects []))
 
 (define-function browse-url (collection #key objects prefix)
   (concatenate "/api/" collection
@@ -516,59 +517,65 @@
                    (concatenate "?" (encode (make-object "prefix" prefix)))
                    "")))
 
-(define-function initialize ((window <browser>)
-                             #rest rest #key type (objects []))
-  (apply next-method window rest)
-  (bind ((spinner (make <spinner>))
-         (not-available (make <not-available>))
-         (content (get window "content"))
-         (results (set! (get window "results")
+(define-function initialize ((browser <browser>) #rest rest #key type)
+  (apply next-method browser rest)
+  (bind ((spinner (set! (get browser "spinner")
+                        (make <spinner>)))
+         (not-available (set! (get browser "not-available")
+                              (make <not-available>)))
+         (content (get browser "content"))
+         (results (set! (get browser "results")
                         (create-element "ul" parent: content)))
          (collection (get *types* type "collection"))
          (collection-name (get *types* type "collection-name"))
-         (search (set! (get window "search")
-                       (make <search-field> instant?: #t)))
-         (request))
+         (search (set! (get browser "search")
+                       (make <search-field> instant?: #t))))
     (attach spinner content)
     (attach not-available content)
-    (attach search window)
-    (add-class (get window "element")
+    (attach search browser)
+    (add-class (get browser "element")
                "browser")
-    (add-class (get window "element")
+    (add-class (get browser "element")
                collection)
-    (set! (header-label window)
+    (set! (header-label browser)
           collection-name)
-    (bind-methods ((add-result (name)
-                     (bind ((item (create-element "li" parent: results))
-                            (object (make <environment-object> type: type
-                                          name: name identifier: name)))
-                        (attach object item)))
-                   (browse (prefix)
-                     (show spinner)
-                     (hide not-available)
-                     (delete-children results)
-                     (when request
-                       (cancel request))
-                     (set! request
-                           (make <request> url:
-                                 (browse-url collection
-                                             objects: objects
-                                             prefix: prefix)))
-                     (add-listener request "data"
-                                   (method (event)
-                                     (hide spinner)
-                                     (hide not-available)
-                                     (do add-result
-                                         (decode-json (get event "data")))))
-                     (add-listener request "error"
-                                   (method (event)
-                                     (hide spinner)
-                                     (show not-available)))
-                     (send request)))
-      (add-listener search "search"
+    (add-listener search "search"
+                  (method (event)
+                    (browse browser prefix: (get event "query"))))
+    (browse browser)))
+
+(define-function add-result ((browser <browser>) name)
+  (bind ((item (create-element "li" parent: (get browser "results")))
+         (object (make <environment-object> type: type
+                       name: name identifier: name)))
+    (attach object item)))
+
+(define-function browse ((browser <browser>) #key prefix)
+  (bind ((spinner (get browser "spinner"))
+         (not-available (get browser "not-available"))
+         (results  (get browser "results")))
+    (show spinner)
+    (hide not-available)
+    (delete-children results)
+    (if-bind (request (get browser "request"))
+      (cancel request))
+    (bind ((collection (get *types* (get browser "type") "collection"))
+           (request (set! (get browser "request")
+                          (make <request> url:
+                                (browse-url collection
+                                            objects: (get browser "objects")
+                                            prefix: prefix)))))
+      (add-listener request "data"
                     (method (event)
-                      (browse (get event "query"))))
-      (browse))))
+                      (hide spinner)
+                      (hide not-available)
+                      (do (curry add-result browser)
+                          (decode-json (get event "data")))))
+      (add-listener request "error"
+                    (method (event)
+                      (hide spinner)
+                      (show not-available)))
+      (send request))))
 
 ;; workspace
 
@@ -602,6 +609,7 @@
 (define-function initialize ((spinner <spinner>))
   (set! (get spinner "element")
         (create-element "div" class: "spinner")))
+
 ;; N/A
 
 (define-class <not-available> (<component>))
