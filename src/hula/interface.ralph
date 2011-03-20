@@ -527,7 +527,8 @@
          (collection (get *types* type "collection"))
          (collection-name (get *types* type "collection-name"))
          (search (set! (get window "search")
-                       (make <search-field> instant?: #t))))
+                       (make <search-field> instant?: #t)))
+         (request))
     (attach spinner content)
     (attach not-available content)
     (attach search window)
@@ -542,27 +543,32 @@
                             (object (make <environment-object> type: type
                                           name: name identifier: name)))
                         (attach object item)))
-                   (initiate-search (prefix)
+                   (browse (prefix)
                      (show spinner)
                      (hide not-available)
                      (delete-children results)
-                     (bind ((request (make <request> url:
-                                           (browse-url collection
-                                                       objects: objects
-                                                       prefix: prefix))))
-                       (add-listener request "data"
-                                     (method (event)
-                                       (hide spinner)
-                                       (do add-result
-                                           (decode-json (get event "data")))))
-                       (add-listener request "error"
-                                     (method (event)
-                                       (hide spinner)
-                                       (show not-available)))
-                       (send request))))
+                     (when request
+                       (cancel request))
+                     (set! request
+                           (make <request> url:
+                                 (browse-url collection
+                                             objects: objects
+                                             prefix: prefix)))
+                     (add-listener request "data"
+                                   (method (event)
+                                     (hide spinner)
+                                     (hide not-available)
+                                     (do add-result
+                                         (decode-json (get event "data")))))
+                     (add-listener request "error"
+                                   (method (event)
+                                     (hide spinner)
+                                     (show not-available)))
+                     (send request)))
       (add-listener search "search"
                     (method (event)
-                      (initiate-search (get event "query")))))))
+                      (browse (get event "query"))))
+      (browse))))
 
 ;; workspace
 
