@@ -443,7 +443,7 @@
                              (get target "element")
                              target)))
     ;; menu is only added once to document.body
-    (unless (parent-element element)
+    (unless (parent element)
       (append-child body element)
       (add-listener document "click"
                     (method (event)
@@ -504,10 +504,20 @@
 
 (define-class <browser> (<window>)
   type
-  object)
+  objects)
+
+(define-function browse-url (collection #key objects prefix)
+  (concatenate "/api/" collection
+               (join (map (method (object)
+                            (concatenate "/" (get object "name")))
+                          objects))
+               (if (and prefix
+                        (not (empty? prefix)))
+                   (concatenate "?" (encode (make-object "prefix" prefix)))
+                   "")))
 
 (define-function initialize ((window <browser>)
-                             #rest rest #key type object)
+                             #rest rest #key type (objects []))
   (apply next-method window rest)
   (bind ((spinner (make <spinner>))
          (not-available (make <not-available>))
@@ -521,36 +531,38 @@
     (attach spinner content)
     (attach not-available content)
     (attach search window)
-    (add-listener search "search"
-                  (method (event)
-                    (log "!!")))
+    (add-class (get window "element")
+               "browser")
+    (add-class (get window "element")
+               collection)
+    (set! (header-label window)
+          collection-name)
     (bind-methods ((add-result (name)
                      (bind ((item (create-element "li" parent: results))
                             (object (make <environment-object> type: type
                                           name: name identifier: name)))
-                        (attach object item))))
-      (show spinner)
-      (bind ((url (concatenate "/api/" collection
-                               (if object
-                                   (concatenate "/" (get object "name"))
-                                   "")))
-             (request (make <request> url: url)))
-        (add-listener request "data"
-                      (method (event)
-                        (hide spinner)
-                        (do add-result
-                            (decode-json (get event "data")))))
-        (add-listener request "error"
-                      (method (event)
-                        (hide spinner)
-                        (show not-available)))
-        (add-class (get window "element")
-                   "browser")
-        (add-class (get window "element")
-                   collection)
-        (set! (header-label window)
-              collection-name)
-        (send request)))))
+                        (attach object item)))
+                   (initiate-search (prefix)
+                     (show spinner)
+                     (hide not-available)
+                     (delete-children results)
+                     (bind ((request (make <request> url:
+                                           (browse-url collection
+                                                       objects: objects
+                                                       prefix: prefix))))
+                       (add-listener request "data"
+                                     (method (event)
+                                       (hide spinner)
+                                       (do add-result
+                                           (decode-json (get event "data")))))
+                       (add-listener request "error"
+                                     (method (event)
+                                       (hide spinner)
+                                       (show not-available)))
+                       (send request))))
+      (add-listener search "search"
+                    (method (event)
+                      (initiate-search (get event "query")))))))
 
 ;; workspace
 
@@ -614,7 +626,7 @@
    "Modules" (method (event)
                (bind ((browser (make <browser>
                                      type: "module"
-                                     object: object)))
+                                     objects: [object])))
                      (set! (view-position browser)
                            [(- (js:get-property event "pageX") 10)
                             (- (js:get-property event "pageY") 10)])
