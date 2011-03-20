@@ -33,7 +33,9 @@ path {
     overflow: hidden;
 
     display: -webkit-box;
+    display: -moz-box;
     -webkit-box-orient: vertical;
+    -moz-box-orient: vertical;
 
     min-width: 100px;
     min-height: 100px;
@@ -96,8 +98,11 @@ path {
 .view .content {
     overflow: auto;
     -webkit-box-flex: 1;
+    -moz-box-flex: 1;
     display: -webkit-box;
+    display: -moz-box;
     -webkit-box-orient: vertical;
+    -moz-box-orient: vertical;
 }
 
 .view .resizer {
@@ -210,6 +215,7 @@ button.close:hover {
 
 .view.note textarea {
     -webkit-box-flex: 1;
+    -moz-box-flex: 1;
     display: block;
     margin: 0;
     background: transparent;
@@ -227,6 +233,7 @@ button.close:hover {
 .view.search {
     min-height: 68px;
     min-width: 150px;
+    width: 200px;
 }
 
 .view.search .header .icon {
@@ -258,14 +265,18 @@ button.close:hover {
     height: 100%;
     overflow: auto;
     -webkit-box-flex: 1;
+    -moz-box-flex: 1;
     display: -webkit-box;
+    display: -moz-box;
     -webkit-box-orient: vertical;
+    -moz-box-orient: vertical;
 }
 
 div.editor .CodeMirror,
 div.editor .CodeMirror-gutter {
     height: 100% !important;
     -webkit-box-flex: 1;
+    -moz-box-flex: 1;
 }
 
 .CodeMirror-gutter {
@@ -311,6 +322,8 @@ menu command:hover {
 .view.browser {
     min-height: 150px;
     min-width: 150px;
+    height: 250px;
+    width: 200px;
 }
 
 .view.browser li {
@@ -340,15 +353,14 @@ menu command:hover {
     width: 100%;
 }
 
-/* spinner */
+/* spinner, not-available */
 
-.spinner {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    right: 0;
+.spinner, .not-available {
+    position: relative;
+    -webkit-box-flex: 1;
+    -moz-box-flex: 1;
     opacity: 0;
+    display: none;
     -webkit-transition-property: opacity;
     -moz-transition-property: opacity;
     -webkit-transition-duration: 1000ms;
@@ -356,8 +368,18 @@ menu command:hover {
     z-index: -100;
 }
 
-.spinner.active {
+.not-available {
+    text-align: center;
+    color: #999;
+    margin-top: 10px;
+}
+
+.spinner.active, .not-available.active {
+    display: block;
     opacity: 1;
+}
+
+.spinner.active {
     background: url(images/spinner.gif) no-repeat center center;
 }
 

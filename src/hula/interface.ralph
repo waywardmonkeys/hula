@@ -3,6 +3,10 @@
            toolbox/dom hula/search)
   export: (<window> <resizer> *context-menu* *workspace*))
 
+(define-generic show (object))
+
+(define-generic hide (object))
+
 ;; component
 
 (define-class <component> ()
@@ -15,6 +19,13 @@
                     (get element "element")
                     element)
                 (get component "element")))
+
+(define-function show ((component <component>))
+  (add-class (get component "element") "active"))
+
+(define-function hide ((component <component>))
+  (remove-class (get component "element") "active"))
+
 
 (define-generic update (component))
 
@@ -307,9 +318,11 @@
 
 ;;
 
-(define-class <search-field> (<component>))
+(define-class <search-field> (<component>)
+  instant?)
 
-(define-function initialize ((component <search-field>))
+(define-function initialize ((component <search-field>) #rest rest)
+  (apply next-method component rest)
   (bind ((section (set! (get component "element")
                         (create-element "section"
                                         class: "search")))
@@ -318,14 +331,13 @@
                                       parent: section))))
     (set! (attribute input "type") "search")))
 
-(define-function attach ((component <search-field>) (view <view>)
-                         #key instant?)
+(define-function attach ((component <search-field>) (view <view>))
   (insert-before (get component "element")
                  (get view "content"))
   (add-listener (get component "input") "keypress"
                 (method (event)
                   (when (or (== (get event "keyCode") 13)
-                            instant?)
+                            (get component "instant?"))
                     (bind ((query (get component "input" "value")))
                       (trigger-event component
                                      (make-event "search"
@@ -441,9 +453,9 @@
                                        (get menu "y")))
                         (remove-class element "active")))))
     (add-listener target-element "contextmenu"
-                  (curry show-menu menu target))))
+                  (curry show menu target))))
 
-(define-function show-menu ((menu <context-menu>) target event)
+(define-function show ((menu <context-menu>) target event)
   (bind ((x (set! (get menu "x")
                   (js:get-property event "pageX")))
          (y (set! (get menu "y")
@@ -498,14 +510,16 @@
                              #rest rest #key type object)
   (apply next-method window rest)
   (bind ((spinner (make <spinner>))
+         (not-available (make <not-available>))
          (content (get window "content"))
          (results (set! (get window "results")
                         (create-element "ul" parent: content)))
          (collection (get *types* type "collection"))
          (collection-name (get *types* type "collection-name"))
          (search (set! (get window "search")
-                       (make <search-field>))))
+                       (make <search-field> instant?: #t))))
     (attach spinner content)
+    (attach not-available content)
     (attach search window)
     (add-listener search "search"
                   (method (event)
@@ -520,11 +534,16 @@
                                (if object
                                    (concatenate "/" (get object "name"))
                                    "")))
-             (request (make <request> url: url
-                            callback: (method (data)
-                                        (hide spinner)
-                                        (do add-result
-                                            (decode-json data))))))
+             (request (make <request> url: url)))
+        (add-listener request "data"
+                      (method (event)
+                        (hide spinner)
+                        (do add-result
+                            (decode-json (get event "data")))))
+        (add-listener request "error"
+                      (method (event)
+                        (hide spinner)
+                        (show not-available)))
         (add-class (get window "element")
                    "browser")
         (add-class (get window "element")
@@ -565,12 +584,14 @@
 (define-function initialize ((spinner <spinner>))
   (set! (get spinner "element")
         (create-element "div" class: "spinner")))
+;; N/A
 
-(define-function show ((spinner <spinner>))
-  (add-class (get spinner "element") "active"))
+(define-class <not-available> (<component>))
 
-(define-function hide ((spinner <spinner>))
-  (remove-class (get spinner "element") "active"))
+(define-function initialize ((not-available <not-available>))
+  (bind ((element (set! (get not-available "element")
+                        (create-element "div" class: "not-available"))))
+    (set! (js:get-property element "innerHTML") "Not available")))
 
 ;; environment object
 
