@@ -405,7 +405,7 @@
                      (create-element "textarea"
                                      parent: element))))
     (set! (js:get-property text "innerHTML")
-          "function foo () { return 'foo'; }")
+          "define function add (a :: &lt;integer&gt;, b :: &lt;integer&gt;)\n\ta + b;\nend")
     (set! (get editor "editor")
           ((js:get-property "CodeMirror" "fromTextArea")
            text (make-object
