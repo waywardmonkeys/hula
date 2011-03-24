@@ -55,8 +55,6 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 		'instance', 'let', 'local', 'otherwise', 'slot',
 		'subclass', 'then', 'to', 'keyed-by', 'virtual'],
 
-	hash: ['rest', 'key', 'all-keys', 'next'],
-
 	// Condition signaling function calls
 	signalingCalls: ['signal', 'error', 'cerror',
 			 'break', 'check-type', 'abort']
@@ -87,14 +85,11 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	headerKeyword: ("^\(?:([a-zA-Z][-a-zA-Z0-9]*:)|[ \t])"
 			+ "([ \t]*)([^ \t\n][^\n]*?)\n"),
 
-	// Symbols with keyword syntax
+	// Symbols with special syntax
 	symbolKeyword: "^" + symbolPattern + ":",
-
-	// Symbols with class syntax
 	symbolClass: "^<" + symbolPattern + ">",
-
-	// Symbols with string syntax
-	symbolString: /^#"[^\"]*"/,
+	symbolGlobal: "^\\*" + symbolPattern + "\\*",
+	symbolConstant: "^$" + symbolPattern,
 
 	// Logical negation operator
 	// TODO: "~"
@@ -125,11 +120,14 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 
     function tokenBase (stream, state) {
 	// String
-	var ch = stream.next();
-	if (ch == '"' || ch == "'")
-	    return chain(stream, state, tokenString(ch));
+	var ch = stream.peek();
+	if (ch == '"' || ch == "'") {
+	    stream.next();
+	    return chain(stream, state, tokenString(ch, "string"));
+	}
 	// Comment
 	else if (ch == "/") {
+	    stream.next();
 	    if (stream.eat("*")) {
 		return chain(stream, state, tokenComment);
 	    }
@@ -142,10 +140,50 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 		return ret("operator");
 	    }
 	}
-	// TODO: define -> definition, primary
-	// TODO: end -> while ch <> ';' OR
-	//       in words['definition'].concat(words['statement']) ?!
-	stream.backUp(1);
+	// Decimal
+	else if (/\d/.test(ch)) {
+	    stream.match(/^\d*(?:\.\d*)?(?:e[+\-]?\d+)?/);
+	    return ret("number", "decimal");
+	}
+	// Hash
+	else if (ch == "#") {
+	    stream.next();
+	    // Symbol with string syntax
+	    var ch = stream.peek();
+	    if (ch == '"') {
+		stream.next();
+		return chain(stream, state, tokenString('"', "symbol"));
+	    }
+	    // Binary number
+	    else if (ch == 'b') {
+		stream.next();
+		stream.eatWhile(/[01]/);
+		return ret('number', 'binary');
+	    }
+	    // Hex number
+	    else if (ch == 'x') {
+		stream.next();
+		stream.eatWhile(/[\da-f]/i);
+		return ret('number', 'hex');
+	    }
+	    // Octal number
+	    else if (ch == 'o') {
+		stream.next();
+		stream.eatWhile(/[0-7]/);
+		return ret('number', 'octal');
+	    }
+	    // Hash symbol
+	    else {
+		stream.eatWhile(/[-a-zA-Z]/);
+		return ret('hash');
+	    }
+	}
+	else if (stream.match('define')) {
+	    return ret('definition');
+	}
+	else if (stream.match('end')) {
+	    return ret('end');
+	}
 	for (name in patterns) {
 	    if (patterns.hasOwnProperty(name)
 		&& stream.match(patterns[name]))
@@ -157,7 +195,7 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
         return ret("variable");
     }
 
-    function tokenComment(stream, state) {
+    function tokenComment (stream, state) {
 	var maybeEnd = false, ch;
 	while (ch = stream.next()) {
 	    if (ch == "/" && maybeEnd) {
@@ -169,7 +207,7 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	return ret("comment");
     }
 
-    function tokenString (quote) {
+    function tokenString (quote, type) {
 	return function (stream, state) {
 	    var next, end = false;
 	    while ((next = stream.next()) != null) {
@@ -180,9 +218,17 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	    }
 	    if (end)
 		state.tokenize = tokenBase;
-	    return ret("string");
+	    return ret(type);
 	};
     }
+
+    // Parser
+
+    // TODO: end: allow any in words['definition'].concat(words['statement'])
+
+
+
+
 
     // Interface
     return {
@@ -196,8 +242,7 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	    if (stream.eatSpace())
 		return null;
 	    var style = state.tokenize(stream, state);
-//	    console.log(type);
-	    return style;
+	    return style; // parseDylan(state, style, type, content, stream);
 	}
     }
 });
