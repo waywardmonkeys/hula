@@ -1,18 +1,5 @@
 CodeMirror.defineMode("dylan", function(config, parserConfig) {
 
-    // Build a search pattern that matches any of the patterns
-    // passed to it. Makes sure that it doesn't match partial words.
-    function makePattern (words) {
-	function makeWordPattern (word) {
-	    return "\\b" + word + "\\b";
-	}
-	return words.map(makeWordPattern).join("|");
-    }
-
-    function makeWordsPattern (words) {
-	return "(" + makePattern(words) + ")";
-    }
-
     // states: in-prologe, in-code
 
     //// Words
@@ -94,34 +81,24 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	.concat(words['otherSimpleDefinition']);
 
     //// Patterns
-
+    var symbolPattern = "[-_a-zA-Z?!*@<>$%]+"
     var patterns = {
-	// Regexp pattern that matches 'define' and adjectives.
-	// A sub-pattern designed to be followed by patterns that match
-	// the define word or other parts of the definition macro call.
-	define: "define([ \t]+\\w+)*[ \t]+",
-
-	// Internal pattern for finding comments in Dylan code.
-	// Currently only handles end-of-line comments.
-	comment: "//.*$",
-
 	// keyword
 	headerKeyword: ("^\(?:([a-zA-Z][-a-zA-Z0-9]*:)|[ \t])"
-			+ "([ \t]*)([^ \t\n][^\n]*?)\n")
+			+ "([ \t]*)([^ \t\n][^\n]*?)\n"),
+
+	// Symbols with keyword syntax
+	symbolKeyword: "^" + symbolPattern + ":",
+
+	// Symbols with class syntax
+	symbolClass: "^<" + symbolPattern + ">",
+
+	// Symbols with string syntax
+	symbolString: /^#"[^\"]*"/,
+
+	// Logical negation operator
+	// TODO: "~"
     };
-
-    // Generate patterns for words
-    patterns['typeDefinition'] =
-	makeWordsPattern(words['typeParameterizedDefinition']);
-
-    ['otherDefinition', 'definition', 'namedDefinition',
-     'unnamedDefinition', 'typeParameterizedDefinition',
-     'parameterizedDefinition','constantSimpleDefinition',
-     'variableSimpleDefinition', 'otherSimpleDefinition',
-	  'simpleDefinition']
-	.forEach(function (id) {
-	    patterns[id] = makeWordsPattern(words[id]);
-	});
 
     // Names beginning "with-" and "without-" are commonly
     // used as statement macro
@@ -129,87 +106,29 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
     var statementPrefixes =
 	"|\\b" + withStatementPrefix + "[-_a-zA-Z?!*@<>$%]+";
 
-    // We disallow newlines in "define foo" patterns because it allows
-    // the actual keyword to be confused for a qualifier if another
-    // definition follows closely.
-    patterns['keyword'] =
-	makePattern([patterns['define'] + patterns['definition']]
-		    .concat(words['statement']))
-	+ statementPrefixes;
-
-    // We intentionally disallow newlines in "end foo" constructs,
-    // because doing so makes it very difficult to deal with the
-    // keyword "end" in comments.
-    patterns['endKeyword'] =
-	"\\bend\\b[ \t]*("
-	+ makePattern(words['definition'].concat(words['statement']))
-	+ statementPrefixes
-	+ ")?";
-
-    patterns['defineMethod'] =
-	"(" + patterns['define'] + ")?"
-	+ "(method|function)[ \t\n]+[^( ]*[ \t\n]*";
-
-    patterns['separator'] =
-	makePattern(words['separator']);
-
-    patterns['other'] =
-	makePattern(["define([ \t\n]+\\w+)*[ \t\n]+"
-		     + patterns['simpleDefinition']]
-		    .concat(words['other']));
-
     // Compile all patterns to regular expressions
     for (var patternName in patterns)
 	if (patterns.hasOwnProperty(patternName))
 	    patterns[patternName] = new RegExp(patterns[patternName]);
 
-    // Patterns that match that portion of a compound statement
-    // that precedes the body. This is used to determine where
-    // the first statement begins for indentation purposes.
-    // Contains a list of patterns, each of which is either a regular
-    // expression or a list of regular expressions.
-    // A set of balanced parens will be matched between each
-    // list element.
-    var startExpressions =
-	(words['statement']
-	 .map(function (statement) {
-	     return [statement + "[ \t\n]*", ""];
-	 }))
-	.concat(["begin",
-		 "case",
-		 // special patterns for "define method", which is funky
-		 [patterns['defineMethod'], "[ \t\n]*=>[^;)]+;?"],
-		 [patterns['defineMethod'], "[ \t\n]*;?"],
-		 ("define[ \t]+"
-		  + patterns['namedDefinition']
-		       + "[ \t\n]+[^ \t\n]+"),
-		 ("define[ \t]+"
-		  + patterns['unnamedDefinition']),
-		 [("(" + patterns['define'] + ")?"
-		   + patterns['parameterizedDefinition'],
-		   + "[ \t\n]+[^\( ]*[ \t\n]*"),
-		  ""],
-	 	 // Since we don't know the syntax of all the "with(out)-" macros,
-		 // just assume that the user has already split the line at
-		 // the end of the header.
-		 (withStatementPrefix + "[^\n]*"),
-		 "[[({]"]);
 
     function chain (stream, state, f) {
 	state.tokenize = f;
 	return f(stream, state);
     }
 
-    var type;
-    function ret (_type, style) {
-	type = _type;
+    var type, content;
+    function ret (_type, style, _content) {
+	type = _type; content = _content;
 	return 'dylan-' + (style || _type);
     }
 
     function tokenBase (stream, state) {
+	// String
 	var ch = stream.next();
 	if (ch == '"' || ch == "'")
 	    return chain(stream, state, tokenString(ch));
+	// Comment
 	else if (ch == "/") {
 	    if (stream.eat("*")) {
 		return chain(stream, state, tokenComment);
@@ -223,7 +142,19 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 		return ret("operator");
 	    }
 	}
-	return ret()
+	// TODO: define -> definition, primary
+	// TODO: end -> while ch <> ';' OR
+	//       in words['definition'].concat(words['statement']) ?!
+	stream.backUp(1);
+	for (name in patterns) {
+	    if (patterns.hasOwnProperty(name)
+		&& stream.match(patterns[name]))
+	    {
+		return ret(name, null, stream.current());
+	    }
+	}
+	stream.next();
+        return ret("variable");
     }
 
     function tokenComment(stream, state) {
@@ -265,7 +196,7 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	    if (stream.eatSpace())
 		return null;
 	    var style = state.tokenize(stream, state);
-	    console.log(type);
+//	    console.log(type);
 	    return style;
 	}
     }
