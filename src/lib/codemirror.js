@@ -22,7 +22,7 @@ var CodeMirror = (function() {
       '<div style="position: relative">' + // Set to the height of the text, causes scrolling
         '<pre style="position: absolute; visibility: hidden">' + // To measure line/char size
            '<span>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span></pre>' +
-        '<div style="position: absolute">' + // Moved around its parent to cover visible view
+        '<div style="position: relative">' + // Moved around its parent to cover visible view
           '<div class="CodeMirror-gutter"><div class="CodeMirror-gutter-text"></div></div>' +
           '<div style="overflow: hidden; position: absolute; width: 0; left: 0">' + // Wraps and hides input textarea
             '<textarea style="height: 1px; position: absolute;" wrap="off"></textarea></div>' +
@@ -59,9 +59,9 @@ var CodeMirror = (function() {
     var shiftSelecting, reducedSelection;
     // Variables used by startOperation/endOperation to track what
     // happened during the operation.
-    var updateInput, changes, textChanged, selectionChanged;
+    var updateInput, changes, textChanged, selectionChanged, leaveInputAlone;
     // Current visible range (may be bigger than the view window).
-    var showingFrom = 0, showingTo = 0, lastHeight = 0;
+    var showingFrom = 0, showingTo = 0, lastHeight = 0, curKeyId = null;
     // editing will hold an object describing the things we put in the
     // textarea, to help figure out whether something changed.
     // bracketHighlighted is used to remember that a backet has been
@@ -75,12 +75,16 @@ var CodeMirror = (function() {
 
     // Register our event handlers.
     connect(wrapper, "mousedown", operation(onMouseDown));
+    // Gecko browsers fire contextmenu *after* opening the menu, at
+    // which point we can't mess with it anymore. Context menu is
+    // handled in onMouseDown for Gecko.
+    if (!gecko) connect(wrapper, "contextmenu", operation(onContextMenu));
     connect(code, "dblclick", operation(onDblClick));
     connect(wrapper, "scroll", function() {updateDisplay([]); if (options.onScroll) options.onScroll(instance);});
     connect(window, "resize", function() {updateDisplay(true);});
     connect(input, "keyup", operation(onKeyUp));
     connect(input, "keydown", operation(onKeyDown));
-    connect(input, "keypress", onKeyPress);
+    connect(input, "keypress", operation(onKeyPress));
     connect(input, "focus", onFocus);
     connect(input, "blur", onBlur);
 
@@ -89,6 +93,7 @@ var CodeMirror = (function() {
     connect(wrapper, "drop", operation(onDrop));
     connect(wrapper, "paste", function(){input.focus(); fastPoll();});
     connect(input, "paste", function(){fastPoll();});
+    connect(input, "cut", function(){fastPoll();});
 
     if (document.activeElement == input) onFocus();
     else onBlur();
@@ -125,10 +130,16 @@ var CodeMirror = (function() {
         return pageCoords(start ? sel.from : sel.to);
       },
       charCoords: function(pos){return pageCoords(clipPos(pos));},
+      coordsChar: function(coords) {
+        var off = eltOffset(lineSpace);
+        var line = Math.min(showingTo - 1, showingFrom + Math.floor(coords.y / lineHeight()));
+        return clipPos({line: line, ch: charFromX(clipLine(line), coords.x)});
+      },
       getSearchCursor: function(query, pos, caseFold) {return new SearchCursor(query, pos, caseFold);},
       markText: operation(function(a, b, c){return operation(markText(a, b, c));}),
       setMarker: addGutterMarker,
       clearMarker: removeGutterMarker,
+      setLineClass: operation(setLineClass),
       lineInfo: lineInfo,
       addWidget: function(pos, node, scroll) {
         var pos = localCoords(clipPos(pos), true);
@@ -188,12 +199,13 @@ var CodeMirror = (function() {
           return e.stop();
         }
 
+      if (gecko && e.button() == 3) onContextMenu(e);
+      if (e.button() != 1) return;
       // For button 1, if it was clicked inside the editor
       // (posFromMouse returning non-null), we have to adjust the
       // selection.
       var start = posFromMouse(e), last = start, going;
       if (!start) {if (e.target() == wrapper) e.stop(); return;}
-      if (e.button() != 1) return; // TODO can we make copy/cut context menu work?
       setCursor(start.line, start.ch, false);
 
       if (!focused) onFocus();
@@ -275,7 +287,7 @@ var CodeMirror = (function() {
       if (mod && (code == 36 || code == 35)) {scrollEnd(code == 36); return e.stop();} // ctrl-home/end
       if (mod && code == 65) {selectAll(); return e.stop();} // ctrl-a
       if (!options.readOnly) {
-        if (!anyMod && code == 13) {handleEnter(); return e.stop();} // enter
+        if (!anyMod && code == 13) {return;} // enter
         if (!anyMod && code == 9 && handleTab(e.e.shiftKey)) return e.stop(); // tab
         if (mod && code == 90) {undo(); return e.stop();} // ctrl-z
         if (mod && ((e.e.shiftKey && code == 90) || code == 89)) {redo(); return e.stop();} // ctrl-shift-z, ctrl-y
@@ -287,15 +299,15 @@ var CodeMirror = (function() {
       // its start when it is inverted and a movement key is pressed
       // (and later restore it again), shouldn't be used for
       // non-movement keys.
-      var id = (mod ? "c" : "") + code;
-      if (sel.inverted && movementKeys.hasOwnProperty(id)) {
+      curKeyId = (mod ? "c" : "") + code;
+      if (sel.inverted && movementKeys.hasOwnProperty(curKeyId)) {
         var range = selRange(input);
         if (range) {
           reducedSelection = {anchor: range.start};
           setSelRange(input, range.start, range.start);
         }
       }
-      fastPoll(id);
+      fastPoll(curKeyId);
     }
     function onKeyUp(e) {
       if (reducedSelection) {
@@ -313,7 +325,9 @@ var CodeMirror = (function() {
       }
       var code = e.e.keyCode;
       // Re-stop tab and enter. Necessary on some browsers.
-      if (code == 13 || (code == 9 && options.tabMode != "default")) e.stop();
+      if (code == 13) {handleEnter(); e.stop();}
+      else if (code == 9 && options.tabMode != "default") e.stop();
+      else fastPoll(curKeyId);
     }
 
     function onFocus() {
@@ -452,7 +466,9 @@ var CodeMirror = (function() {
       return getRange(sel.from, sel.to);
     }
 
+    var pollingFast = false; // Ensures slowPoll doesn't cancel fastPoll
     function slowPoll() {
+      if (pollingFast) return;
       poll.set(2000, function() {
         startOperation();
         readInput();
@@ -461,14 +477,14 @@ var CodeMirror = (function() {
       });
     }
     function fastPoll(keyId) {
-      var misses = 0;
+      var missed = false;
+      pollingFast = true;
       function p() {
         startOperation();
         var changed = readInput();
         if (changed == "moved" && keyId) movementKeys[keyId] = true;
-        if (changed) {poll.set(80, p); misses = 0;}
-        else if (misses++ < 5) {poll.set(80, p);}
-        else slowPoll();
+        if (!changed && !missed) {missed = true; poll.set(80, p);}
+        else {pollingFast = false; slowPoll();}
         endOperation();
       }
       poll.set(20, p);
@@ -595,7 +611,10 @@ var CodeMirror = (function() {
     // determine which DOM updates have to be made, and makes the
     // updates.
     function updateDisplay(changes) {
-      if (!wrapper.clientWidth) return;
+      if (!wrapper.clientWidth) {
+        showingFrom = showingTo = 0;
+        return;
+      }
       // First create a range of theoretically intact lines, and punch
       // holes in that using the change info.
       var intact = changes === true ? [] : [{from: showingFrom, to: showingTo, domStart: 0}];
@@ -723,6 +742,7 @@ var CodeMirror = (function() {
           }
           else {
             node.innerHTML = lines[j].getHTML(ch1, ch2, false);
+            node.className = lines[j].className || "";
             node = node.nextSibling;
           }
         }
@@ -878,9 +898,10 @@ var CodeMirror = (function() {
         if (n) indentation = lines[n-1].indentation();
         else indentation = 0;
       }
-      else if (how == "smart") indentation = mode.indent(state, line.text.slice(curSpace));
+      else if (how == "smart") indentation = mode.indent(state, line.text.slice(curSpaceString.length));
       else if (how == "add") indentation = curSpace + options.indentUnit;
-      else if (how == "subtract") indentation = Math.max(0, curSpace - options.indentUnit);
+      else if (how == "subtract") indentation = curSpace - options.indentUnit;
+      indentation = Math.max(0, indentation);
       var diff = indentation - curSpace;
 
       if (!diff) {
@@ -951,6 +972,20 @@ var CodeMirror = (function() {
       line.gutterMarker = null;
       updateGutter();
     }
+    function setLineClass(line, className) {
+      if (typeof line == "number") {
+        var no = line;
+        line = lines[clipLine(line)];
+      }
+      else {
+        var no = indexOf(lines, line);
+        if (no == -1) return null;
+      }
+      line.className = className;
+      changes.push({from: no, to: no + 1});
+      return line;
+    }
+
     function lineInfo(line) {
       if (typeof line == "number") {
         var n = line;
@@ -1023,6 +1058,29 @@ var CodeMirror = (function() {
           if (!n || n == wrapper) return null;
       var line = showingFrom + Math.floor(y / lineHeight());
       return clipPos({line: line, ch: charFromX(clipLine(line), x)});
+    }
+    function onContextMenu(e) {
+      var pos = posFromMouse(e);
+      if (!pos || window.opera) return; // Opera is difficult.
+      if (posEq(sel.from, sel.to) || posLess(pos, sel.from) || !posLess(pos, sel.to))
+        setCursor(pos.line, pos.ch);
+
+      var oldCSS = input.style.cssText;
+      input.style.cssText = "position: fixed; width: 30px; height: 30px; top: " + (e.pageY() - 1) +
+        "px; left: " + (e.pageX() - 1) + "px; z-index: 1000; background: white; " +
+        "border-width: 0; outline: none; overflow: hidden;";
+      var val = input.value = getSelection();
+      input.focus();
+      setSelRange(input, 0, val.length);
+      if (gecko) e.stop();
+      leaveInputAlone = true;
+      setTimeout(function() {
+        if (input.value != val) operation(replaceSelection)(input.value, "end");
+        input.style.cssText = oldCSS;
+        leaveInputAlone = false;
+        prepareInput();
+        slowPoll();
+      }, 50);
     }
 
     // Cursor-blinking
@@ -1154,7 +1212,7 @@ var CodeMirror = (function() {
 
       // updateInput can be set to a boolean value to force/prevent an
       // update.
-      if (updateInput === true || (updateInput !== false && selectionChanged))
+      if (!leaveInputAlone && (updateInput === true || (updateInput !== false && selectionChanged)))
         prepareInput();
 
       if (selectionChanged && options.onCursorActivity)
@@ -1333,6 +1391,18 @@ var CodeMirror = (function() {
     }
     return mfactory(options, config);
   }
+  CodeMirror.listModes = function() {
+    var list = [];
+    for (var m in modes)
+      if (modes.propertyIsEnumerable(m)) list.push(m);
+    return list;
+  };
+  CodeMirror.listMIMEs = function() {
+    var list = [];
+    for (var m in mimeModes)
+      if (mimeModes.propertyIsEnumerable(m)) list.push(m);
+    return list;
+  };
 
   CodeMirror.fromTextArea = function(textarea, options) {
     if (!options) options = {};
@@ -1453,7 +1523,7 @@ var CodeMirror = (function() {
     this.styles = styles || [text, null];
     this.stateAfter = null;
     this.text = text;
-    this.marked = null; this.gutterMarker = null;
+    this.marked = this.gutterMarker = this.className = null;
   }
   Line.prototype = {
     // Replace a piece of a line, keeping the styles around it intact.
@@ -1537,7 +1607,9 @@ var CodeMirror = (function() {
     // Produces an HTML fragment for the line, taking selection,
     // marking, and highlighting into account.
     getHTML: function(sfrom, sto, includePre) {
-      var html = includePre ? ["<pre>"] : [];
+      var html = [];
+      if (includePre)
+        html.push(this.className ? '<pre class="' + this.className + '">': "<pre>");
       function span(text, style) {
         if (!text) return;
         if (style) html.push('<span class="', style, '">', htmlEscape(text), "</span>");
@@ -1698,6 +1770,8 @@ var CodeMirror = (function() {
     var pre = document.createElement("pre");
     pre.innerHTML = " "; return !pre.innerHTML;
   })();
+
+  var gecko = /gecko\/\d{7}/i.test(navigator.userAgent);
 
   var lineSep = "\n";
   // Feature-detect whether newlines in textareas are converted to \r\n
