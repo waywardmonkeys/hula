@@ -1,6 +1,28 @@
-span.dylan-keyword {color: #90b;}
-span.dylan-atom {color: #291;}
-span.dylan-variabledef {color: #00f;}
-span.dylan-localvariable {color: #049;}
-span.dylan-comment {color: #a70;}
-span.dylan-string {color: #a22;}
+span.dylan-definition,
+span.dylan-end {
+    color: #1730FB;
+}
+
+span.dylan-symbol {
+    color: #824D9C;
+}
+
+span.dylan-symbolClass {
+    color: #228B22;
+}
+
+span.dylan-atom {
+    color: #291;
+}
+
+span.dylan-comment {
+    color: #AD3434;
+}
+
+span.dylan-string {
+    color: #933D6C;
+}
+
+span.dylan-hash {
+    font-weight: bold
+}

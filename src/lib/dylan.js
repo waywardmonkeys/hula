@@ -178,7 +178,7 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 		return ret('hash');
 	    }
 	}
-	else if (stream.match('define')) {
+	else if (stream.match('define') || stream.match('method')) {
 	    return ret('definition');
 	}
 	else if (stream.match('end')) {
@@ -197,7 +197,7 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 
     function tokenComment (stream, state) {
 	var maybeEnd = false, ch;
-	while (ch = stream.next()) {
+	while ((ch = stream.next())) {
 	    if (ch == "/" && maybeEnd) {
 		state.tokenize = tokenBase;
 		break;
@@ -222,27 +222,110 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	};
     }
 
-    // Parser
+    // // Parser
 
-    // TODO: end: allow any in words['definition'].concat(words['statement'])
+    // // TODO: end: allow any in words['definition'].concat(words['statement'])
 
+    // function Lexical (indented, column, type, align, prev, info) {
+    // 	this.indented = indented;
+    // 	this.column = column;
+    // 	this.type = type;
+    // 	this.prev = prev;
+    // 	this.info = info;
+    // 	if (align != null)
+    // 	    this.align = align;
+    // }
 
+    // function parseDylan (state, style, type, content, stream) {
+    // 	var cc = state.cc;
+    // 	cx.state = state;
+    // 	cx.stream = stream;
+    // 	cx.marked = null,
+    // 	cx.cc = cc;
 
+    // 	if (!state.lexical.hasOwnProperty("align"))
+    // 	    state.lexical.align = true;
 
+    // 	while (true) {
+    // 	    var combinator = cc.length ? cc.pop() : expression;
+    // 	    if (combinator(type, content)) {
+    // 		while (cc.length && cc[cc.length - 1].lex)
+    // 		    cc.pop()();
+    // 		if (cx.marked)
+    // 		    return cx.marked;
+    // 		// if (type == "variable" && inScope(state, content))
+    // 		//     return "js-localvariable";
+    // 		return style;
+    // 	    }
+    // 	}
+    // }
+
+    // var cx = {state: null,
+    // 	      column: null,
+    // 	      marked: null,
+    // 	      cc: null};
+
+    // function pass () {
+    // 	for (var i = arguments.length - 1; i >= 0; i--)
+    // 	    cx.cc.push(arguments[i]);
+    // }
+
+    // function cont () {
+    // 	pass.apply(null, arguments);
+    // 	return true;
+    // }
+
+    // function pushcontext () {
+    // 	if (!cx.state.context)
+    // 	    cx.state.localVars = defaultVars;
+    // 	cx.state.context = {prev: cx.state.context,
+    // 			    vars: cx.state.localVars};
+    // }
+
+    // function popcontext () {
+    // 	cx.state.localVars = cx.state.context.vars;
+    // 	cx.state.context = cx.state.context.prev;
+    // }
+
+    // function pushlex (type, info) {
+    // 	var result = function () {
+    // 	    var state = cx.state;
+    // 	    state.lexical =
+    // 		new JSLexical(state.indented, cx.stream.column(),
+    // 			      type, null, state.lexical, info)
+    // 	};
+    // 	result.lex = true;
+    // 	return result;
+    // }
+
+    // function poplex() {
+    // 	var state = cx.state;
+    // 	if (state.lexical.prev) {
+    // 	    if (state.lexical.type == ")")
+    // 		state.indented = state.lexical.indented;
+    // 	    state.lexical = state.lexical.prev;
+    // 	}
+    // }
+    // poplex.lex = true;
 
     // Interface
     return {
 	startState: function (baseColumn) {
 	    return {tokenize: tokenBase};
-	},
-	copyState: function (state) {
-	    return {tokenize: state.tokenize};
+//		    lexical: new Lexical((baseColumn || 0), 0, "block", false),
+//		    cc: []};
 	},
 	token: function (stream, state) {
 	    if (stream.eatSpace())
 		return null;
 	    var style = state.tokenize(stream, state);
-	    return style; // parseDylan(state, style, type, content, stream);
+	    return style;  // parseDylan(state, style, type, content, stream);
+	},
+	indent: function (state, textAfter) {
+	    console.log(state, textAfter);
+	    if (state.tokenize != tokenBase)
+		return 0;
+	    return 0;
 	}
     }
 });
