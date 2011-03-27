@@ -480,34 +480,24 @@ keyword:
   single
   collection
   single-name
-  collection-name)
+  collection-name
+  (subtypes []))
 
 (define *types*
-  (make-object
-   "library" (make <type>
-                   single: "library"
-                   collection: "libraries"
-                   single-name: "Library"
-                   collection-name: "Libraries")
-   "module" (make <type>
-                  single: "module"
-                  collection: "modules"
-                  single-name: "Module"
-                  collection-name: "Modules")))
+  [(make <type>
+         single: "library"
+         collection: "libraries"
+         single-name: "Library"
+         collection-name: "Libraries"
+         subtypes: [(make <type>
+                          single: "module"
+                          collection: "modules"
+                          single-name: "Module"
+                          collection-name: "Modules")])])
 
 (define-class <browser> (<window>)
   type
   (objects []))
-
-(define-function browse-url (collection #key objects prefix)
-  (concatenate "/api/" collection
-               (join (map (method (object)
-                            (concatenate "/" (get object "name")))
-                          objects))
-               (if (and prefix
-                        (not (empty? prefix)))
-                   (concatenate "?" (encode (make-object "prefix" prefix)))
-                   "")))
 
 (define-function initialize ((browser <browser>) #rest rest #key type)
   (apply next-method browser rest)
@@ -518,8 +508,8 @@ keyword:
          (content (get browser "content"))
          (results (set! (get browser "results")
                         (create-element "ul" parent: content)))
-         (collection (get *types* type "collection"))
-         (collection-name (get *types* type "collection-name"))
+         (collection (get type "collection"))
+         (collection-name (get type "collection-name"))
          (search (set! (get browser "search")
                        (make <search-field> instant?: #t))))
     (attach spinner content)
@@ -536,9 +526,27 @@ keyword:
                     (browse browser prefix: (get event "query"))))
     (browse browser)))
 
+(define-function show-view (type x y #rest rest)
+  (log x y type rest)
+  (bind ((view (apply make type rest)))
+    (set! (view-position view)
+          [(- x 10) (- y 10)])
+    (attach view body)))
+
+(define-function browse-url (collection #key objects prefix)
+  (concatenate "/api/" collection
+               (join (map (method (object)
+                            (concatenate "/" (get object "name")))
+                          objects))
+               (if (and prefix
+                        (not (empty? prefix)))
+                   (concatenate "?" (encode (make-object "prefix" prefix)))
+                   "")))
+
 (define-function add-result ((browser <browser>) name)
   (bind ((item (create-element "li" parent: (get browser "results")))
-         (object (make <environment-object> type: type
+         (object (make <environment-object>
+                       type: (get browser "type")
                        name: name identifier: name)))
     (attach object item)))
 
@@ -551,7 +559,7 @@ keyword:
     (delete-children results)
     (if-bind (request (get browser "request"))
       (cancel request))
-    (bind ((collection (get *types* (get browser "type") "collection"))
+    (bind ((collection (get browser "type" "collection"))
            (request (set! (get browser "request")
                           (make <request> url:
                                 (browse-url collection
@@ -580,19 +588,20 @@ keyword:
 (define *workspace* (make <workspace>))
 
 (define-function context-menu-items ((workspace <workspace>))
-  (make-object
-   "Search" (method (event)
-              (bind ((search (make <search-window>)))
-                (set! (view-position search)
-                      [(- (js:get-property event "pageX") 10)
-                       (- (js:get-property event "pageY") 10)])
-                (attach search body)))
-   "Libraries" (method (event)
-                 (bind ((browser (make <browser> type: "library")))
-                   (set! (view-position browser)
-                         [(- (js:get-property event "pageX") 10)
-                          (- (js:get-property event "pageY") 10)])
-                   (attach browser body)))))
+  (bind ((items (make-object
+                 "Search" (method (event)
+                            (show-view <search-window>
+                             (js:get-property event "pageX")
+                             (js:get-property event "pageY"))))))
+    (do (method (type)
+          (set! (get items (get type "collection-name"))
+                (method (event)
+                  (show-view <browser>
+                   (js:get-property event "pageX")
+                   (js:get-property event "pageY")
+                   type: type))))
+        *types*)
+    items))
 
 ;; spinner
 
@@ -623,17 +632,21 @@ keyword:
   (apply next-method object rest)
   (bind ((element (set! (get object "element")
                         (create-element "div" class: "object"))))
-    (add-class element type)
+    (add-class element (get type "name"))
     (set! (js:get-property element "innerHTML") name))
   (attach *context-menu* object))
 
 (define-function context-menu-items ((object <environment-object>))
-  (make-object
-   "Modules" (method (event)
-               (bind ((browser (make <browser>
-                                     type: "module"
-                                     objects: [object])))
-                     (set! (view-position browser)
-                           [(- (js:get-property event "pageX") 10)
-                            (- (js:get-property event "pageY") 10)])
-                     (attach browser body)))))
+  (bind ((type (get object "type"))
+         (items (make-object)))
+    (do (method (subtype)
+          (set! (get items (get subtype "collection-name"))
+                (method (event)
+                  (show-view <browser>
+                   (js:get-property event "pageX")
+                   (js:get-property event "pageY")
+                   type: subtype
+                   objects: [object]))))
+        (get type "subtypes"))
+    items))
+
