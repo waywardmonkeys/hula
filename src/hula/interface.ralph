@@ -1,33 +1,7 @@
 (define-module interface
   import: (runtime/core runtime/watch
-           toolbox/dom hula/search)
+           toolbox/dom toolbox/interface hula/search)
   export: (<window> <resizer> *context-menu* *workspace*))
-
-(define-generic show (object))
-
-(define-generic hide (object))
-
-;; component
-
-(define-class <component> ()
-  element)
-
-(define-generic attach (component target))
-
-(define-function attach ((component <component>) element)
-  (append-child (if (instance? element <component>)
-                    (get element "element")
-                    element)
-                (get component "element")))
-
-(define-function show ((component <component>))
-  (add-class (get component "element") "active"))
-
-(define-function hide ((component <component>))
-  (remove-class (get component "element") "active"))
-
-
-(define-generic update (component))
 
 ;; view
 
