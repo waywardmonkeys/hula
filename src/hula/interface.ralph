@@ -452,22 +452,24 @@ keyword:
          (y (set! (get menu "y")
                   (js:get-property event "pageY")))
          (element (get menu "element"))
-         (items (or (context-menu-items target) [])))
-  ;; set position
-  (set! (element-left element)
-        (+ x 5))
-  (set! (element-top element)
-        (- y 10))
-  ;; populate entries
-  (delete-children element)
-  (do (method (label)
-        (bind ((command (create-element "command" parent: element)))
-          (set! (attribute command "label") label)
-          (set! (js:get-property command "innerHTML") label)
-          (add-listener command "click" (get items label))))
-      (keys items))
-  ;; show menu
-  (add-class element "active")
+         (items (or (context-menu-items target)
+                    (make-object))))
+  (unless (empty? (keys items))
+    ;; set position
+    (set! (element-left element)
+          (+ x 5))
+    (set! (element-top element)
+          (- y 10))
+    ;; populate entries
+    (delete-children element)
+    (do (method (label)
+                (bind ((command (create-element "command" parent: element)))
+                  (set! (attribute command "label") label)
+                  (set! (js:get-property command "innerHTML") label)
+                  (add-listener command "click" (get items label))))
+        (keys items))
+    ;; show menu
+    (add-class element "active"))
   ;; prevent default menu
   (prevent-default event)
   (stop-propagation event)))
