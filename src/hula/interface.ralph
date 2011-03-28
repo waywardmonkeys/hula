@@ -474,32 +474,64 @@ keyword:
   (prevent-default event)
   (stop-propagation event)))
 
-;; browser
+;; types and collections
 
 (define-class <type> ()
-  single
-  collection
-  single-name
-  collection-name
-  (subtypes []))
+  identifier
+  name
+  (collections []))
 
-(define *types*
-  [(make <type>
-         single: "library"
-         collection: "libraries"
-         single-name: "Library"
-         collection-name: "Libraries"
-         subtypes: [(make <type>
-                          single: "module"
-                          collection: "modules"
-                          single-name: "Module"
-                          collection-name: "Modules")])])
+(define-class <collection> ()
+  identifier
+  name
+  type)
+
+(define *root-collections*
+  [(make <collection>
+         identifier: "libraries"
+         name: "Libraries"
+         type: "library")])
+
+(define *types* (make-object))
+
+(define-function define-type (identifier name
+                              #key (collections []))
+  (set! (get *types* identifier)
+        (make <type>
+              identifier: identifier
+              name: name
+              collections: collections)))
+
+(define-type "library" "Library"
+  collections: [(make <collection>
+                      identifier: "modules"
+                      name: "Modules"
+                      type: "module")
+                (make <collection>
+                      identifier: "defined-modules"
+                      name: "Defined modules"
+                      type: "module")
+                (make <collection>
+                      identifier: "used-libraries"
+                      name: "Used Libaries"
+                      type: "library")])
+
+(define-type "module" "Module"
+  collections: [(make <collection>
+                      identifier: "used-modules"
+                      name: "Used modules"
+                      type: "module")
+                (make <collection>
+                      identifier: "module-definitions"
+                      name: "Defintions")])
+
+;; browser
 
 (define-class <browser> (<window>)
-  type
-  (objects []))
+  collection
+  parent)
 
-(define-function initialize ((browser <browser>) #rest rest #key type)
+(define-function initialize ((browser <browser>) #rest rest #key collection)
   (apply next-method browser rest)
   (bind ((spinner (set! (get browser "spinner")
                         (make <spinner>)))
@@ -508,8 +540,6 @@ keyword:
          (content (get browser "content"))
          (results (set! (get browser "results")
                         (create-element "ul" parent: content)))
-         (collection (get type "collection"))
-         (collection-name (get type "collection-name"))
          (search (set! (get browser "search")
                        (make <search-field> instant?: #t))))
     (attach spinner content)
@@ -518,36 +548,48 @@ keyword:
     (add-class (get browser "element")
                "browser")
     (add-class (get browser "element")
-               collection)
+               (get collection "identifier"))
     (set! (header-label browser)
-          collection-name)
+          (get collection "name"))
     (add-listener search "search"
                   (method (event)
                     (browse browser prefix: (get event "query"))))
     (browse browser)))
 
 (define-function show-view (type x y #rest rest)
-  (log x y type rest)
   (bind ((view (apply make type rest)))
     (set! (view-position view)
           [(- x 10) (- y 10)])
     (attach view body)))
 
-(define-function browse-url (collection #key objects prefix)
-  (concatenate "/api/" collection
-               (join (map (method (object)
-                            (concatenate "/" (get object "name")))
-                          objects))
-               (if (and prefix
-                        (not (empty? prefix)))
-                   (concatenate "?" (encode (make-object "prefix" prefix)))
-                   "")))
+(define-function browse-url (collection #key parent prefix)
+  (bind ((parents []))
+    (while parent
+      (push-last parents parent)
+      (set! parent (get parent "parent")))
+    (concatenate "/api/" (get collection "identifier")
+                 (if (not (empty? parents))
+                     (concatenate "/" (join (map (rcurry get "name") parents) "/"))
+                     "")
+                 (if (and prefix
+                          (not (empty? prefix)))
+                     (concatenate "?" (encode (make-object "prefix" prefix)))
+                     ""))))
 
-(define-function add-result ((browser <browser>) name)
+(define-function add-result ((browser <browser>) result)
   (bind ((item (create-element "li" parent: (get browser "results")))
-         (object (make <environment-object>
-                       type: (get browser "type")
-                       name: name identifier: name)))
+         (object (if (instance? result <string>)
+                     (make <environment-object>
+                           type: (get *types* (get browser "collection" "type"))
+                           name: result
+                           identifier: result
+                           parent: (get browser "parent"))
+                     (make <environment-object>
+                           type: (get *types* (get result "type"))
+                           name: (get result "name")
+                           identifier: (or (get result "identifier")
+                                           (get result "name"))
+                           parent: (get browser "parent")))))
     (attach object item)))
 
 (define-function browse ((browser <browser>) #key prefix)
@@ -559,11 +601,11 @@ keyword:
     (delete-children results)
     (if-bind (request (get browser "request"))
       (cancel request))
-    (bind ((collection (get browser "type" "collection"))
+    (bind ((collection (get browser "collection"))
            (request (set! (get browser "request")
                           (make <request> url:
                                 (browse-url collection
-                                            objects: (get browser "objects")
+                                            parent: (get browser "parent")
                                             prefix: prefix)))))
       (add-listener request "data"
                     (method (event)
@@ -593,14 +635,14 @@ keyword:
                             (show-view <search-window>
                              (js:get-property event "pageX")
                              (js:get-property event "pageY"))))))
-    (do (method (type)
-          (set! (get items (get type "collection-name"))
+    (do (method (collection)
+          (set! (get items (get collection "name"))
                 (method (event)
                   (show-view <browser>
                    (js:get-property event "pageX")
                    (js:get-property event "pageY")
-                   type: type))))
-        *types*)
+                   collection: collection))))
+        *root-collections*)
     items))
 
 ;; spinner
@@ -625,28 +667,28 @@ keyword:
 (define-class <environment-object> (<component>)
   type
   identifier
-  name)
+  name
+  parent)
 
 (define-function initialize ((object <environment-object>)
                              #rest rest #key name type)
   (apply next-method object rest)
   (bind ((element (set! (get object "element")
                         (create-element "div" class: "object"))))
-    (add-class element (get type "name"))
-    (set! (js:get-property element "innerHTML") name))
+    (add-class element (get type "identifier"))
+    (set! (js:get-property element "innerText") name))
   (attach *context-menu* object))
 
 (define-function context-menu-items ((object <environment-object>))
   (bind ((type (get object "type"))
          (items (make-object)))
-    (do (method (subtype)
-          (set! (get items (get subtype "collection-name"))
+    (do (method (collection)
+          (set! (get items (get collection "name"))
                 (method (event)
                   (show-view <browser>
                    (js:get-property event "pageX")
                    (js:get-property event "pageY")
-                   type: subtype
-                   objects: [object]))))
-        (get type "subtypes"))
+                   collection: collection
+                   parent: object))))
+        (get type "collections"))
     items))
-
