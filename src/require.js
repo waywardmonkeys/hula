@@ -11,13 +11,16 @@ function _e (exports, _code) {
 
      function request (name, callback) {
 	 var req = new XMLHttpRequest();
-	 req.open("GET", document.location.href + name + ".js", true);
+	 var path = name + ".js";
+	 req.open("GET", document.location.href + path, true);
 	 req.onreadystatechange = function () {
 	     if (req.readyState == 4) {
 		 if (req.status == 200) {
 		     var currentRequests = requests;
 		     var exports = {};
-		     _e(exports, req.responseText);
+		    var location = "//@ sourceURL="
+			 + path.replace(/\//g, "_").replace(/\.js$/, "") + "\n";
+		     _e(exports, location + req.responseText);
 		     modules[name] = exports;
 		     deferredCallbacks
 			 .unshift(function() {
@@ -37,7 +40,7 @@ function _e (exports, _code) {
 		 } else {
 		     callback();
 		     requests--;
-		     
+
 		 }
 	     }
 	 };
