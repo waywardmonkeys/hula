@@ -401,3 +401,22 @@ section.search {
 section.search input {
     width: 100%
 }
+
+/* environment objects */
+
+.object {
+    padding-left: 18px;
+    background-repeat: no-repeat;
+}
+
+.object.class {
+    background-image: url(images/class.png)
+}
+
+.object.method {
+    background-image: url(images/method.png)
+}
+
+.object.generic-function {
+    background-image: url(images/generic-function.png)
+}

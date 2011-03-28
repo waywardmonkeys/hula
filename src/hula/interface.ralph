@@ -525,6 +525,14 @@ keyword:
                       identifier: "module-definitions"
                       name: "Defintions")])
 
+(define-type "class" "Class")
+(define-type "function" "Function")
+(define-type "generic-function" "Generic function")
+(define-type "method" "method")
+(define-type "variable" "Variable")
+(define-type "constant" "Constant")
+
+
 ;; browser
 
 (define-class <browser> (<window>)
