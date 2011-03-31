@@ -382,30 +382,14 @@
 
 (define-class <editor> (<component>))
 
-(define-function initialize ((editor <editor>))
+(define-function initialize ((editor <editor>) #key source)
   (bind ((element (set! (get editor "element")
                         (create-element "div" class: "editor")))
          (text (set! (get editor "text")
                      (create-element "textarea"
                                      parent: element))))
-    (set! (js:get-property text "innerHTML")
-          "define function add (a :: &lt;integer&gt;, b :: &lt;integer&gt;)
-  a + b;
-end
-
-keyword:
-
-#rest
-
-#\"symbol\"
-
-
-\"string\"
-
-/* comment */ method (x)
-                x + 1;
-              end;
-")
+    (when source
+      (set! (js:get-property text "innerHTML") source))
     (set! (get editor "editor")
           ((js:get-property "CodeMirror" "fromTextArea")
            text (make-object
@@ -414,15 +398,18 @@ keyword:
 
 ;; editor window
 
-(define-class <editor-window> (<window>))
+(define-class <editor-window> (<window>)
+  editor)
 
-(define-function initialize ((window <editor-window>))
+(define-function initialize ((window <editor-window>) #key source)
   (next-method window)
   (add-class (get window "element") "editor")
   (set! (header-label window) "Editor")
-  (bind ((editor (make <editor>)))
+  (bind ((editor (set! (get window "editor")
+                       (make <editor> source: source))))
     (append-child (get window "content")
                   (get editor "element"))))
+
 
 ;; context menu
 
@@ -489,7 +476,8 @@ keyword:
 (define-class <type> ()
   identifier
   name
-  (collections []))
+  (collections [])
+  has-source?)
 
 (define-class <collection> ()
   identifier
@@ -504,13 +492,12 @@ keyword:
 
 (define *types* (make-object))
 
-(define-function define-type (identifier name
-                              #key (collections []))
+(define-function define-type (identifier name #rest rest)
   (set! (get *types* identifier)
-        (make <type>
-              identifier: identifier
-              name: name
-              collections: collections)))
+        (apply make <type>
+               (concatenate rest
+                            [identifier: identifier
+                             name: name]))))
 
 (define-type "library" "Library"
   collections: [(make <collection>
@@ -536,6 +523,7 @@ keyword:
                       name: "Defintions")])
 
 (define-type "class" "Class"
+  has-source?: #t
   collections: [(make <collection>
                       identifier: "direct-slots"
                       name: "Direct slots"
@@ -556,10 +544,11 @@ keyword:
                       identifier: "direct-subclasses"
                       name: "Direct subclasses"
                       type: "class")
-                (make <collection>
-                      identifier: "all-subclasses"
-                      name: "All subclasses"
-                      type: "class")
+                ;; TODO: not supported by backend yet
+                ;; (make <collection>
+                ;;       identifier: "all-subclasses"
+                ;;       name: "All subclasses"
+                ;;       type: "class")
                 (make <collection>
                       identifier: "direct-methods"
                       name: "Direct methods"
@@ -569,18 +558,27 @@ keyword:
                       name: "All methods"
                       type: "method")])
 
-(define-type "function" "Function")
+(define-type "function" "Function"
+  has-source?: #t)
 
 (define-type "generic-function" "Generic function"
+  has-source?: #t
   collections: [(make <collection>
                       identifier: "methods"
                       name: "Methods"
                       type: "method")])
 
-(define-type "method" "method")
-(define-type "variable" "Variable")
-(define-type "constant" "Constant")
-(define-type "slot" "Slot")
+(define-type "method" "method"
+  has-source?: #t)
+
+(define-type "variable" "Variable"
+  has-source?: #t)
+
+(define-type "constant" "Constant"
+  has-source?: #t)
+
+(define-type "slot" "Slot"
+  has-source?: #t)
 
 ;; browser
 
@@ -629,8 +627,9 @@ keyword:
                      (concatenate "?" (encode (make-object "prefix" prefix)))
                      "")))
 
-(define-function add-result ((browser <browser>) parents result)
+(define-function add-result ((browser <browser>) result #key parents)
   (bind ((item (create-element "li" parent: (get browser "results")))
+         (parents (or parents (get result "parents")))
          (object (if (instance? result <string>)
                      (make <environment-object>
                            type: (get *types* (get browser "collection" "type"))
@@ -638,7 +637,8 @@ keyword:
                            identifier: result
                            parents: parents)
                      (make <environment-object>
-                           type: (get *types* (get result "type"))
+                           type: (or (get *types* (get result "type"))
+                                     (get *types* (get browser "collection" "type")))
                            name: (get result "name")
                            identifier: (or (get result "identifier")
                                            (get result "name"))
@@ -671,8 +671,8 @@ keyword:
                       (bind ((result (decode-json (get event "data")))
                              (parents (get result "parents"))
                              (objects (get result "objects")))
-                        (log "parents:" parents)
-                        (do (curry add-result browser parents)
+                        (do (method (object)
+                              (add-result browser object parents: parents))
                             objects))))
       (add-listener request "error"
                     (method (event)
@@ -743,6 +743,13 @@ keyword:
 (define-function context-menu-items ((object <environment-object>))
   (bind ((type (get object "type"))
          (items (make-object)))
+    (when (get type "has-source?")
+      (set! (get items "Source")
+            (method (event)
+              (show-view <editor-window>
+               (js:get-property event "pageX")
+               (js:get-property event "pageY")
+               source: "FOO BAR"))))
     (do (method (collection)
           (set! (get items (get collection "name"))
                 (method (event)
