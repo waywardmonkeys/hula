@@ -438,20 +438,45 @@
                  "lineNumbers" #t
                  "matchBrackets" #t)))))
 
+(define-function (setter source) ((editor <editor>) source)
+  ((js:get-property editor "editor" "setValue") source))
+
+
 ;; editor window
 
-(define-class <editor-window> (<window>)
+(define-class <editor-window> (<remote-window>)
+  object
   editor)
 
-(define-function initialize ((window <editor-window>) #key source)
-  (next-method window)
+(define-function initialize ((window <editor-window>)
+                             #rest rest #key object)
+  (apply next-method window rest)
   (add-class (get window "element") "editor")
   (set! (header-label window) "Editor")
   (bind ((editor (set! (get window "editor")
-                       (make <editor> source: source))))
+                       (make <editor>))))
     (append-child (get window "content")
-                  (get editor "element"))))
+                  (get editor "element"))
+    (add-listener window "data"
+                  (method (event)
+                    (show editor)
+                    (bind ((code (get event "data")))
+                      (log code)
+                      (set! (source editor)
+                            (decode-json code))))))
+  (when object
+    (request window)))
 
+(define-function request ((window <editor-window>))
+  (hide (get window "editor"))
+  (next-method window))
+
+(define-function request-url ((window <editor-window>))
+  (bind ((object (get window "object")))
+     (concatenate "/api/source/"
+                  (join (concatenate (get object "parents")
+                                     [(get object "identifier")])
+                        "/"))))
 
 ;; context menu
 
@@ -773,7 +798,7 @@
               (show-view <editor-window>
                (js:get-property event "pageX")
                (js:get-property event "pageY")
-               source: "FOO BAR"))))
+               object: object))))
     (do (method (collection)
           (set! (get items (get collection "name"))
                 (method (event)
