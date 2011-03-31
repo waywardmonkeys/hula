@@ -619,40 +619,37 @@ keyword:
           [(- x 10) (- y 10)])
     (attach view body)))
 
-(define-function browse-url (collection #key parent prefix)
-  (bind ((parents []))
-    (while parent
-      (push-last parents parent)
-      (set! parent (get parent "parent")))
+(define-function browse-url (collection objects #key prefix)
     (concatenate "/api/" (get collection "identifier")
-                 (if (not (empty? parents))
-                     (concatenate "/" (join (map (rcurry get "name") parents) "/"))
+                 (if (not (empty? objects))
+                     (concatenate "/" (join objects "/"))
                      "")
                  (if (and prefix
                           (not (empty? prefix)))
                      (concatenate "?" (encode (make-object "prefix" prefix)))
-                     ""))))
+                     "")))
 
-(define-function add-result ((browser <browser>) result)
+(define-function add-result ((browser <browser>) parents result)
   (bind ((item (create-element "li" parent: (get browser "results")))
          (object (if (instance? result <string>)
                      (make <environment-object>
                            type: (get *types* (get browser "collection" "type"))
                            name: result
                            identifier: result
-                           parent: (get browser "parent"))
+                           parents: parents)
                      (make <environment-object>
                            type: (get *types* (get result "type"))
                            name: (get result "name")
                            identifier: (or (get result "identifier")
                                            (get result "name"))
-                           parent: (get browser "parent")))))
+                           parents: parents))))
     (attach object item)))
 
 (define-function browse ((browser <browser>) #key prefix)
   (bind ((spinner (get browser "spinner"))
          (not-available (get browser "not-available"))
-         (results  (get browser "results")))
+         (results  (get browser "results"))
+         (object (get browser "object")))
     (show spinner)
     (hide not-available)
     (delete-children results)
@@ -662,14 +659,21 @@ keyword:
            (request (set! (get browser "request")
                           (make <request> url:
                                 (browse-url collection
-                                            parent: (get browser "parent")
+                                            (if object
+                                                (concatenate (get object "parents")
+                                                             [(get object "identifier")])
+                                                [])
                                             prefix: prefix)))))
       (add-listener request "data"
                     (method (event)
                       (hide spinner)
                       (hide not-available)
-                      (do (curry add-result browser)
-                          (decode-json (get event "data")))))
+                      (bind ((result (decode-json (get event "data")))
+                             (parents (get result "parents"))
+                             (objects (get result "objects")))
+                        (log "parents:" parents)
+                        (do (curry add-result browser parents)
+                            objects))))
       (add-listener request "error"
                     (method (event)
                       (hide spinner)
@@ -725,7 +729,7 @@ keyword:
   type
   identifier
   name
-  parent)
+  (parents []))
 
 (define-function initialize ((object <environment-object>)
                              #rest rest #key name type)
@@ -746,6 +750,6 @@ keyword:
                    (js:get-property event "pageX")
                    (js:get-property event "pageY")
                    collection: collection
-                   parent: object))))
+                   object: object))))
         (get type "collections"))
     items))
