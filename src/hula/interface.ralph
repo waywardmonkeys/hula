@@ -1,5 +1,5 @@
 (define-module interface
-  import: (runtime/core runtime/watch
+  import: (runtime/core runtime/regexp runtime/watch
            toolbox/dom toolbox/interface hula/search)
   export: (<window> <resizer> *context-menu* *workspace*))
 
