@@ -26,6 +26,11 @@ path {
     stroke-linejoin: bevel;
 }
 
+.active {
+    opacity: 1 !important;
+    pointer-events: auto;
+}
+
 /* view */
 
 .view {
@@ -287,21 +292,16 @@ div.editor .CodeMirror-gutter {
 
 menu {
     position: absolute;
-    display: none;
     opacity: 0;
+    pointer-events: none;
     -webkit-transition-property: opacity;
     -moz-transition-property: opacity;
-    -webkit-transition-duration: 200ms;
-    -moz-transition-duration: 200ms;
+    -webkit-transition-duration: 150ms;
+    -moz-transition-duration: 150ms;
     background: white;
     border: 1px solid #c4c4c4;
     border-radius: 5px;
     z-index: 1000;
-}
-
-menu.active {
-    opacity: 1;
-    display: block;
     -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
     -moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
     padding: 3px 0;
@@ -361,22 +361,22 @@ menu command:hover {
     -moz-box-flex: 1;
     opacity: 0;
     display: none;
+    pointer-events: none;
     -webkit-transition-property: opacity;
     -moz-transition-property: opacity;
-    -webkit-transition-duration: 1000ms;
-    -moz-transition-duration: 1000ms;
+    -webkit-transition-duration: 400ms;
+    -moz-transition-duration: 400ms;
     z-index: -100;
+}
+
+.spinner.active, .not-available.active {
+    display: block
 }
 
 .not-available {
     text-align: center;
     color: #999;
     margin-top: 10px;
-}
-
-.spinner.active, .not-available.active {
-    display: block;
-    opacity: 1;
 }
 
 .spinner.active {
