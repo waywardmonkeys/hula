@@ -3,6 +3,16 @@
            toolbox/dom toolbox/interface hula/search)
   export: (<window> <resizer> *context-menu* *workspace*))
 
+(define-function fill (template replacements)
+  (do (method (key)
+        (js:var regexp (make <regexp>
+                             pattern: (concatenate "{" (as-string key) "}")
+                             global?: #t))
+        (js:var replacement (js:get-property replacements key))
+        (set! template (replace template regexp replacement)))
+      (keys replacements))
+  template)
+
 ;; view
 
 (define-class <view> (<component>)
