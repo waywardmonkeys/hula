@@ -532,22 +532,61 @@ keyword:
                       name: "Used modules"
                       type: "module")
                 (make <collection>
-                      identifier: "module-definitions"
+                      identifier: "definitions"
                       name: "Defintions")])
 
-(define-type "class" "Class")
+(define-type "class" "Class"
+  collections: [(make <collection>
+                      identifier: "direct-slots"
+                      name: "Direct slots"
+                      type: "slot")
+                (make <collection>
+                      identifier: "all-slots"
+                      name: "All slots"
+                      type: "slot")
+                (make <collection>
+                      identifier: "direct-superclasses"
+                      name: "Direct superclasses"
+                      type: "class")
+                (make <collection>
+                      identifier: "all-superclasses"
+                      name: "All superclasses"
+                      type: "class")
+                (make <collection>
+                      identifier: "direct-subclasses"
+                      name: "Direct subclasses"
+                      type: "class")
+                (make <collection>
+                      identifier: "all-subclasses"
+                      name: "All subclasses"
+                      type: "class")
+                (make <collection>
+                      identifier: "direct-methods"
+                      name: "Direct methods"
+                      type: "method")
+                (make <collection>
+                      identifier: "all-methods"
+                      name: "All methods"
+                      type: "method")])
+
 (define-type "function" "Function")
-(define-type "generic-function" "Generic function")
+
+(define-type "generic-function" "Generic function"
+  collections: [(make <collection>
+                      identifier: "methods"
+                      name: "Methods"
+                      type: "method")])
+
 (define-type "method" "method")
 (define-type "variable" "Variable")
 (define-type "constant" "Constant")
-
+(define-type "slot" "Slot")
 
 ;; browser
 
 (define-class <browser> (<window>)
   collection
-  parent)
+  object)
 
 (define-function initialize ((browser <browser>) #rest rest #key collection)
   (apply next-method browser rest)
