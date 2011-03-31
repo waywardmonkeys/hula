@@ -73,6 +73,48 @@
     (add-class element "window")
     (append-child element footer)))
 
+;; remote
+
+(define-class <remote-window> (<window>)
+  spinner
+  not-available)
+
+(define-generic request ((window <remote-window>)))
+
+(define-generic request-url ((window <remote-window>)))
+
+(define-function initialize ((window <remote-window>) #rest rest)
+  (apply next-method window rest)
+  (bind ((spinner (set! (get window "spinner")
+                        (make <spinner>)))
+         (not-available (set! (get window "not-available")
+                              (make <not-available>)))
+         (content (get window "content")))
+    (attach spinner content)
+    (attach not-available content)))
+
+(define-function request ((window <remote-window>))
+  (bind ((spinner (get window "spinner"))
+         (not-available (get window "not-available"))
+         (object (get window "object")))
+    (show spinner)
+    (hide not-available)
+    (if-bind (request (get window "request"))
+      (cancel request))
+    (bind ((request (set! (get window "request")
+                          (make <request> url: (request-url window)))))
+      (add-listener request "data"
+                    (method (event)
+                      (hide spinner)
+                      (hide not-available)
+                      (trigger-event window event)))
+      (add-listener request "error"
+                    (method (event)
+                      (hide spinner)
+                      (show not-available)
+                      (trigger-event window event)))
+      (send request))))
+
 ;; note
 
 (define-class <note> (<view>))
