@@ -359,7 +359,7 @@
                       (create-element "input"
                                       parent: section))))
     (set! (attribute input "type") "search")
-    (set! (attribute input "results") "5")))
+    (set! (attribute input "results") 0)))
 
 (define-function attach ((component <search-field>) (view <view>))
   (bind ((timeout #f)
@@ -555,13 +555,21 @@
   collection
   object)
 
-(define-function initialize ((browser <browser>) #rest rest #key collection)
+(define-function initialize ((browser <browser>) #rest rest
+                             #key collection object)
   (apply next-method browser rest)
-  (bind ((results (set! (get browser "results")
-                        (create-element "ul"
-                                        parent: (get browser "content"))))
+  (bind ((content (get browser "content"))
+         (results (set! (get browser "results")
+                        (create-element "ul" parent: content)))
          (search (set! (get browser "search")
-                       (make <search-field> instant?: #t))))
+                       (make <search-field> instant?: #t)))
+         (object-component (when object
+                             (make <object-component>
+                                   object: object
+                                   parent?: #t))))
+    (when object
+      (attach object-component
+              (get browser "header")))
     (attach search browser)
     (add-class (get browser "element")
                "browser")
@@ -678,13 +686,17 @@
 ;; component for <environment-object>
 
 (define-class <object-component> (<component>)
-  object)
+  object
+  parent?)
 
-(define-function initialize ((component <object-component>) #rest rest)
+(define-function initialize ((component <object-component>)
+                             #rest rest #key parent?)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
                         (create-element "div" class: "object"))))
     (add-class element (get component "object" "type" "identifier"))
+    (when parent?
+      (add-class element "parent"))
     (set! (js:get-property element "innerText")
           (get component "object" "name")))
   (attach *context-menu* component))
