@@ -276,8 +276,8 @@ button.close:hover {
     overflow: auto;
     -webkit-box-flex: 1;
     -moz-box-flex: 1;
-    display: -webkit-box;
-    display: -moz-box;
+    display: -webkit-box !important;
+    display: -moz-box !important;
     -webkit-box-orient: vertical;
     -moz-box-orient: vertical;
     display: none;
