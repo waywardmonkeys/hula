@@ -245,10 +245,12 @@ button.close:hover {
     width: 200px;
 }
 
+/*
 .view.search .header .icon {
     display: inline-block;
     background: url(images/search.png);
 }
+*/
 
 .view.search ul {
     list-style-type: none;
@@ -265,10 +267,13 @@ button.close:hover {
     min-width: 200px;
 }
 
+/*
 .view.editor .header .icon {
     display: inline-block;
     background: url(images/editor.png);
 }
+*/
+
 
 .view.editor div.editor {
     height: 100%;
