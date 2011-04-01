@@ -1,7 +1,9 @@
 (define-module interface
   import: (runtime/core runtime/regexp runtime/watch
-           toolbox/dom toolbox/interface hula/search)
-  export: (<window> <resizer> *context-menu* *workspace*))
+           toolbox/dom toolbox/interface
+           hula/search hula/environment)
+  export: (<window> <resizer>
+           *context-menu* *workspace*))
 
 (define-function fill (template replacements)
   (do (method (key)
@@ -547,115 +549,6 @@
   (prevent-default event)
   (stop-propagation event)))
 
-;; types and collections
-
-(define-class <type> ()
-  identifier
-  name
-  (collections [])
-  has-source?)
-
-(define-class <collection> ()
-  identifier
-  name
-  type)
-
-(define *root-collections*
-  [(make <collection>
-         identifier: "libraries"
-         name: "Libraries"
-         type: "library")])
-
-(define *types* (make-object))
-
-(define-function define-type (identifier name #rest rest)
-  (set! (get *types* identifier)
-        (apply make <type>
-               (concatenate rest
-                            [identifier: identifier
-                             name: name]))))
-
-(define-type "library" "Library"
-  collections: [(make <collection>
-                      identifier: "modules"
-                      name: "Modules"
-                      type: "module")
-                (make <collection>
-                      identifier: "defined-modules"
-                      name: "Defined modules"
-                      type: "module")
-                (make <collection>
-                      identifier: "used-libraries"
-                      name: "Used Libaries"
-                      type: "library")])
-
-(define-type "module" "Module"
-  collections: [(make <collection>
-                      identifier: "used-modules"
-                      name: "Used modules"
-                      type: "module")
-                (make <collection>
-                      identifier: "definitions"
-                      name: "Defintions")])
-
-(define-type "class" "Class"
-  has-source?: #t
-  collections: [(make <collection>
-                      identifier: "direct-slots"
-                      name: "Direct slots"
-                      type: "slot")
-                (make <collection>
-                      identifier: "all-slots"
-                      name: "All slots"
-                      type: "slot")
-                (make <collection>
-                      identifier: "direct-superclasses"
-                      name: "Direct superclasses"
-                      type: "class")
-                (make <collection>
-                      identifier: "all-superclasses"
-                      name: "All superclasses"
-                      type: "class")
-                (make <collection>
-                      identifier: "direct-subclasses"
-                      name: "Direct subclasses"
-                      type: "class")
-                ;; TODO: not supported by backend yet
-                ;; (make <collection>
-                ;;       identifier: "all-subclasses"
-                ;;       name: "All subclasses"
-                ;;       type: "class")
-                (make <collection>
-                      identifier: "direct-methods"
-                      name: "Direct methods"
-                      type: "method")
-                (make <collection>
-                      identifier: "all-methods"
-                      name: "All methods"
-                      type: "method")])
-
-(define-type "function" "Function"
-  has-source?: #t)
-
-(define-type "generic-function" "Generic function"
-  has-source?: #t
-  collections: [(make <collection>
-                      identifier: "methods"
-                      name: "Methods"
-                      type: "method")])
-
-(define-type "method" "method"
-  has-source?: #t)
-
-(define-type "variable" "Variable"
-  has-source?: #t)
-
-(define-type "constant" "Constant"
-  has-source?: #t)
-
-(define-type "slot" "Slot"
-  has-source?: #t)
-
 ;; browser
 
 (define-class <browser> (<remote-window>)
@@ -713,8 +606,9 @@
                            name: (get result "name")
                            identifier: (or (get result "identifier")
                                            (get result "name"))
-                           parents: parents))))
-    (attach object item)))
+                           parents: parents)))
+         (component (make <object-component> object: object)))
+    (attach component item)))
 
 (define-function request ((browser <browser>))
   (delete-children (get browser "results"))
@@ -781,25 +675,22 @@
                         (create-element "div" class: "not-available"))))
     (set! (js:get-property element "innerHTML") "Not available")))
 
-;; environment object
+;; component for <environment-object>
 
-(define-class <environment-object> (<component>)
-  type
-  identifier
-  name
-  (parents []))
+(define-class <object-component> (<component>)
+  object)
 
-(define-function initialize ((object <environment-object>)
-                             #rest rest #key name type)
-  (apply next-method object rest)
-  (bind ((element (set! (get object "element")
+(define-function initialize ((component <object-component>) #rest rest)
+  (apply next-method component rest)
+  (bind ((element (set! (get component "element")
                         (create-element "div" class: "object"))))
-    (add-class element (get type "identifier"))
-    (set! (js:get-property element "innerText") name))
-  (attach *context-menu* object))
+    (add-class element (get component "object" "type" "identifier"))
+    (set! (js:get-property element "innerText")
+          (get component "object" "name")))
+  (attach *context-menu* component))
 
-(define-function context-menu-items ((object <environment-object>))
-  (bind ((type (get object "type"))
+(define-function context-menu-items ((component <object-component>))
+  (bind ((type (get component "object" "type"))
          (items (make-object)))
     (when (get type "has-source?")
       (set! (get items "Source")
@@ -807,7 +698,7 @@
               (show-view <editor-window>
                (js:get-property event "pageX")
                (js:get-property event "pageY")
-               object: object))))
+               object: (get component "object")))))
     (do (method (collection)
           (set! (get items (get collection "name"))
                 (method (event)
@@ -815,6 +706,6 @@
                    (js:get-property event "pageX")
                    (js:get-property event "pageY")
                    collection: collection
-                   object: object))))
+                   object: (get component "object")))))
         (get type "collections"))
     items))

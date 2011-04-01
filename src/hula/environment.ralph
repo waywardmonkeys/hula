@@ -1,0 +1,120 @@
+(define-module environment
+  import: (runtime/core)
+  export: (<environment-type> <environment-collection> <environment-object>))
+
+;; types and collections
+
+(define-class <environment-type> ()
+  identifier
+  name
+  (collections [])
+  has-source?)
+
+(define-class <environment-collection> ()
+  identifier
+  name
+  type)
+
+(define *root-collections*
+  [(make <environment-collection>
+         identifier: "libraries"
+         name: "Libraries"
+         type: "library")])
+
+(define *types* (make-object))
+
+(define-function define-type (identifier name #rest rest)
+  (set! (get *types* identifier)
+        (apply make <environment-type>
+               (concatenate rest
+                            [identifier: identifier
+                             name: name]))))
+
+(define-type "library" "Library"
+  collections: [(make <environment-collection>
+                      identifier: "modules"
+                      name: "Modules"
+                      type: "module")
+                (make <environment-collection>
+                      identifier: "defined-modules"
+                      name: "Defined modules"
+                      type: "module")
+                (make <environment-collection>
+                      identifier: "used-libraries"
+                      name: "Used Libaries"
+                      type: "library")])
+
+(define-type "module" "Module"
+  collections: [(make <environment-collection>
+                      identifier: "used-modules"
+                      name: "Used modules"
+                      type: "module")
+                (make <environment-collection>
+                      identifier: "definitions"
+                      name: "Defintions")])
+
+(define-type "class" "Class"
+  has-source?: #t
+  collections: [(make <environment-collection>
+                      identifier: "direct-slots"
+                      name: "Direct slots"
+                      type: "slot")
+                (make <environment-collection>
+                      identifier: "all-slots"
+                      name: "All slots"
+                      type: "slot")
+                (make <environment-collection>
+                      identifier: "direct-superclasses"
+                      name: "Direct superclasses"
+                      type: "class")
+                (make <environment-collection>
+                      identifier: "all-superclasses"
+                      name: "All superclasses"
+                      type: "class")
+                (make <environment-collection>
+                      identifier: "direct-subclasses"
+                      name: "Direct subclasses"
+                      type: "class")
+                ;; TODO: not supported by backend yet
+                ;; (make <environment-collection>
+                ;;       identifier: "all-subclasses"
+                ;;       name: "All subclasses"
+                ;;       type: "class")
+                (make <environment-collection>
+                      identifier: "direct-methods"
+                      name: "Direct methods"
+                      type: "method")
+                (make <environment-collection>
+                      identifier: "all-methods"
+                      name: "All methods"
+                      type: "method")])
+
+(define-type "function" "Function"
+  has-source?: #t)
+
+(define-type "generic-function" "Generic function"
+  has-source?: #t
+  collections: [(make <environment-collection>
+                      identifier: "methods"
+                      name: "Methods"
+                      type: "method")])
+
+(define-type "method" "method"
+  has-source?: #t)
+
+(define-type "variable" "Variable"
+  has-source?: #t)
+
+(define-type "constant" "Constant"
+  has-source?: #t)
+
+(define-type "slot" "Slot"
+  has-source?: #t)
+
+;; environment object
+
+(define-class <environment-object> ()
+  type
+  identifier
+  name
+  (parents []))
