@@ -359,16 +359,24 @@
     (set! (attribute input "type") "search")))
 
 (define-function attach ((component <search-field>) (view <view>))
-  (insert-before (get component "element")
-                 (get view "content"))
-  (add-listener (get component "input") "keypress"
-                (method (event)
-                  (when (or (== (get event "keyCode") 13)
-                            (get component "instant?"))
-                    (bind ((query (get component "input" "value")))
-                      (trigger-event component
-                                     (make-event "search"
-                                                 query: query)))))))
+  (bind ((timeout #f)
+         (instant? (get component "instant?")))
+    (insert-before (get component "element")
+                   (get view "content"))
+    (add-listener (get component "input") "keyup"
+                  (method (event)
+                    (when timeout
+                      (clear-timeout timeout))
+                    (set! timeout
+                          (set-timeout
+                           (method ()
+                             (when (or (== (get event "keyCode") 13)
+                                       instant?)
+                               (bind ((query (get component "input" "value")))
+                                 (trigger-event component
+                                                (make-event "search"
+                                                            query: query)))))
+                           300))))))
 
 (define-function focus ((component <search-field>))
   (focus-element (get component "input")))
@@ -431,7 +439,8 @@
                      (create-element "textarea"
                                      parent: element))))
     (when source
-      (set! (js:get-property text "innerHTML") source))
+      (set! (js:get-property text "innerHTML") source)
+      (show editor))
     (set! (get editor "editor")
           ((js:get-property "CodeMirror" "fromTextArea")
            text (make-object
@@ -440,7 +449,6 @@
 
 (define-function (setter source) ((editor <editor>) source)
   ((js:get-property editor "editor" "setValue") source))
-
 
 ;; editor window
 
