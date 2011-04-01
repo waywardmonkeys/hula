@@ -356,7 +356,8 @@
          (input (set! (get component "input")
                       (create-element "input"
                                       parent: section))))
-    (set! (attribute input "type") "search")))
+    (set! (attribute input "type") "search")
+    (set! (attribute input "results") "5")))
 
 (define-function attach ((component <search-field>) (view <view>))
   (bind ((timeout #f)
