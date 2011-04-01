@@ -463,7 +463,7 @@
                              #rest rest #key object)
   (apply next-method window rest)
   (add-class (get window "element") "editor")
-  (set! (header-label window) "Editor")
+  (set! (header-label window) "Source")
   (bind ((editor (set! (get window "editor")
                        (make <editor>))))
     (append-child (get window "content")
@@ -476,6 +476,12 @@
                       (set! (source editor)
                             (decode-json code))))))
   (when object
+    (bind ((object-component
+            (make <object-component>
+                  object: object
+                  parent?: #t)))
+      (attach object-component
+              (get window "header")))
     (request window)))
 
 (define-function request ((window <editor-window>))
