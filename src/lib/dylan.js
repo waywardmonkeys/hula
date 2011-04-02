@@ -41,7 +41,7 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	// Words that begin statements with implicit bodies.
 	statement: ['if', 'block', 'begin', 'method', 'case',
 		    'for', 'select', 'when', 'unless', 'until',
-		    'while', 'iterate', 'profiling'],
+		    'while', 'iterate', 'profiling', 'dynamic-bind'],
 
 	// Patterns that act as separators in compound statements.
 	// This may include any general pattern that must be indented
@@ -78,34 +78,36 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	.concat(words['variableSimpleDefinition'])
 	.concat(words['otherSimpleDefinition']);
 
+    words['keyword'] =
+	words['statement']
+	.concat(words['separator'])
+	.concat(words['other']);
+
     //// Patterns
-    var symbolPattern = "[-_a-zA-Z?!*@<>$%]+"
+    var symbolPattern = "[-_a-zA-Z?!*@<>$%]+";
+    var symbol = new RegExp("^" + symbolPattern);
     var patterns = {
-	// keyword
-	headerKeyword: ("^\(?:([a-zA-Z][-a-zA-Z0-9]*:)|[ \t])"
-			+ "([ \t]*)([^ \t\n][^\n]*?)\n"),
-
 	// Symbols with special syntax
-	symbolKeyword: "^" + symbolPattern + ":",
-	symbolClass: "^<" + symbolPattern + ">",
-	symbolGlobal: "^\\*" + symbolPattern + "\\*",
-	symbolConstant: "^$" + symbolPattern,
-
-	// Logical negation operator
-	// TODO: "~"
+	symbolKeyword: symbolPattern + ":",
+	symbolClass: "<" + symbolPattern + ">",
+	symbolGlobal: "\\*" + symbolPattern + "\\*",
+	symbolConstant: "\\$" + symbolPattern
     };
-
-    // Names beginning "with-" and "without-" are commonly
-    // used as statement macro
-    var withStatementPrefix = /with(out)?-/;
-    var statementPrefixes =
-	"|\\b" + withStatementPrefix + "[-_a-zA-Z?!*@<>$%]+";
 
     // Compile all patterns to regular expressions
     for (var patternName in patterns)
 	if (patterns.hasOwnProperty(patternName))
-	    patterns[patternName] = new RegExp(patterns[patternName]);
+	    patterns[patternName] = new RegExp("^" + patterns[patternName]);
 
+    ['keyword', 'definition'].forEach(function (type) {
+	patterns[type] = words[type].map(function (word) {
+	    return new RegExp('^' + word);
+	});
+    });
+
+    // Names beginning "with-" and "without-" are commonly
+    // used as statement macro
+    patterns['keyword'].push(/^with(?:out)?-[-_a-zA-Z?!*@<>$%]+/);
 
     function chain (stream, state, f) {
 	state.tokenize = f;
@@ -149,7 +151,7 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	else if (ch == "#") {
 	    stream.next();
 	    // Symbol with string syntax
-	    var ch = stream.peek();
+	    ch = stream.peek();
 	    if (ch == '"') {
 		stream.next();
 		return chain(stream, state, tokenString('"', "symbol"));
@@ -178,21 +180,28 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 		return ret('hash');
 	    }
 	}
-	else if (stream.match('define') || stream.match('method')) {
-	    return ret('definition');
-	}
 	else if (stream.match('end')) {
-	    return ret('end');
+	    return ret('end', 'keyword');
 	}
 	for (name in patterns) {
-	    if (patterns.hasOwnProperty(name)
-		&& stream.match(patterns[name]))
-	    {
-		return ret(name, null, stream.current());
+	    if (patterns.hasOwnProperty(name)) {
+		var pattern = patterns[name];
+		console.log("testing:", pattern);
+		if ((pattern instanceof Array
+		     && pattern.some(function (p) {
+			 return stream.match(p);
+		     })) || stream.match(pattern))
+		    return ret(name, null, stream.current());
 	    }
 	}
-	stream.next();
-        return ret("variable");
+	if (stream.match("define"))
+	    return ret("definition")
+	else if (stream.match(symbol))
+            return ret("variable");
+	else {
+	    stream.next();
+	    return ret("other");
+	}
     }
 
     function tokenComment (stream, state) {

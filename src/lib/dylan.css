@@ -1,5 +1,5 @@
 span.dylan-definition,
-span.dylan-end {
+span.dylan-keyword {
     color: #1730FB;
 }
 
@@ -24,5 +24,9 @@ span.dylan-string {
 }
 
 span.dylan-hash {
-    font-weight: bold
+    color: #444
+}
+
+span.dylan-symbolKeyword {
+    color: #A86F4B
 }
