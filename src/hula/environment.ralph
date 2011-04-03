@@ -108,10 +108,22 @@
                             " (" (join specializers ", ") ")"))))
 
 (define-type "variable" "Variable"
-  has-source?: #t)
+  has-source?: #t
+  display: (method (object)
+             (concatenate (get object "name")
+                          " :: "
+                          (get object "details" "type")
+                          " = "
+                          (get object "details" "value"))))
 
 (define-type "constant" "Constant"
-  has-source?: #t)
+  has-source?: #t
+  display: (method (object)
+             (concatenate (get object "name")
+                          " :: "
+                          (get object "details" "type")
+                          " = "
+                          (get object "details" "value"))))
 
 (define-type "slot" "Slot"
   has-source?: #t
