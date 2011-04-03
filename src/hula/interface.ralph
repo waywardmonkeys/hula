@@ -612,17 +612,18 @@
                      (make <environment-object>
                            type: (get *types* (get browser "collection" "type"))
                            name: result
-                           identifier: result
-                           parents: parents)
+                           identifier: result)
                      (make <environment-object>
                            type: (or (get *types* (get result "type"))
                                      (get *types* (get browser "collection" "type")))
                            name: (get result "name")
                            identifier: (or (get result "identifier")
-                                           (get result "name"))
-                           parents: parents)))
-         (component (make <object-component> object: object)))
-    (attach component item)))
+                                           (get result "name"))))))
+    (set! (get object "parents") parents)
+    (set! (get object "details")
+          (get result "details"))
+    (attach (make <object-component> object: object)
+            item)))
 
 (define-function request ((browser <browser>))
   (delete-children (get browser "results"))
@@ -699,12 +700,17 @@
                              #rest rest #key parent?)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
-                        (create-element "div" class: "object"))))
-    (add-class element (get component "object" "type" "identifier"))
+                        (create-element "div" class: "object")))
+         (object (get component "object"))
+         (type (get object "type"))
+         (display (get type "display")))
+    (add-class element (get type "identifier"))
     (when parent?
       (add-class element "parent"))
     (set! (js:get-property element "innerText")
-          (get component "object" "name")))
+          (if display
+              (display object)
+              (get object "name"))))
   (attach *context-menu* component))
 
 (define-function context-menu-items ((component <object-component>))

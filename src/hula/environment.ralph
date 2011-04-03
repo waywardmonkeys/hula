@@ -8,7 +8,8 @@
   identifier
   name
   (collections [])
-  has-source?)
+  has-source?
+  display)
 
 (define-class <environment-collection> ()
   identifier
@@ -100,7 +101,11 @@
                       type: "method")])
 
 (define-type "method" "method"
-  has-source?: #t)
+  has-source?: #t
+  display: (method (object)
+             (bind ((specializers (get object "details" "specializers")))
+               (concatenate (get object "name")
+                            " (" (join specializers ", ") ")"))))
 
 (define-type "variable" "Variable"
   has-source?: #t)
@@ -109,7 +114,11 @@
   has-source?: #t)
 
 (define-type "slot" "Slot"
-  has-source?: #t)
+  has-source?: #t
+  display: (method (object)
+             (concatenate (get object "name")
+                          " :: "
+                          (get object "details" "type"))))
 
 ;; environment object
 
@@ -117,4 +126,5 @@
   type
   identifier
   name
-  (parents []))
+  (parents [])
+  details)
