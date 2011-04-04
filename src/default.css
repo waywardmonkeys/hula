@@ -456,6 +456,14 @@ section.search input {
     text-shadow: none;
 }
 
+.object .object:before {
+    display: none;
+}
+
+.object .object {
+    display: inline-block;
+}
+
 .object.library:before {
     content: 'L';
     background: #729fcf;
@@ -469,6 +477,15 @@ section.search input {
 .object.class:before {
     content: 'C';
     background: #4e9a06;
+}
+
+.object.class:before {
+    content: 'C';
+    background: #4e9a06;
+}
+
+.object .object.class {
+    color: #4e9a06;
 }
 
 .object.generic-function:before {
