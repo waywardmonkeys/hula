@@ -150,3 +150,38 @@
   name
   (parents [])
   details)
+
+(define-function convert-detail (object)
+  (select object instance?
+    ((<array>)
+     (map convert-detail object))
+    ((<string> <number> <boolean>)
+     object)
+    ((<object>)
+     (as-environment-object object))))
+
+(define-function as-environment-object (thing)
+  (bind ((object (if (instance? thing <string>)
+                     (make <environment-object>
+                           name: thing
+                           identifier: thing)
+                     (make <environment-object>
+                           name: (get thing "name")
+                           identifier: (or (get thing "identifier")
+                                           (get thing "name"))))))
+    (set! (get object "type")
+          (get *types* (get thing "type")))
+    (do (method (property)
+          (set! (get object property)
+                (get thing property)))
+        ["parents" "details"])
+    (bind ((details (get object "details")))
+      (do (method (detail)
+            (set! (get details detail)
+                  (convert-detail (get details detail))))
+          (keys details)))
+    (log object)
+    object))
+
+
+
