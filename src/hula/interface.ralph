@@ -701,9 +701,9 @@
     (add-class element (get type "identifier"))
     (when parent?
       (add-class element "parent"))
-    (set! (js:get-property element "innerText")
-          (if display
-              (display object)
+    (if display
+        (display object element)
+        (set! (js:get-property element "innerText")
               (get object "name"))))
   (attach *context-menu* component))
 

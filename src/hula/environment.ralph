@@ -99,48 +99,56 @@
                       name: "Methods"
                       type: "method")])
 
-(define-type "method" "method"
-  display: (method (object)
-             (bind ((specializers (get object "details" "specializers")))
-               (concatenate (get object "name")
-                            " (" (join specializers ", ") ")"))))
+(define-type "method" "method")
+  ;; TODO:
+  ;; display: (method (object)
+  ;;            (bind ((specializers (get object "details" "specializers")))
+  ;;              (concatenate (get object "name")
+  ;;                           " (" (join specializers ", ") ")"))))
 
-(define-type "variable" "Variable"
-  display: (method (object)
-             (concatenate (get object "name")
-                          " :: "
-                          (get object "details" "type"))))
-                          ;; TODO: value not working yet, hide for now
-                          ;; " = "
-                          ;; (get object "details" "value"))))
+(define-type "variable" "Variable")
+  ;; TODO: display
 
-(define-type "global-variable" "Global variable"
-  display: (method (object)
-             (concatenate (get object "name")
-                          " :: "
-                          (get object "details" "type"))))
+(define-type "global-variable" "Global variable")
+  ;; TODO:
+  ;; display: (method (object)
+  ;;            (concatenate (get object "name")
+  ;;                         " :: "
+  ;;                         (get object "details" "type"))))
 
-(define-type "thread-variable" "Thread variable"
-  display: (method (object)
-             (concatenate (get object "name")
-                          " :: "
-                          (get object "details" "type"))))
+(define-type "thread-variable" "Thread variable")
+  ;; TODO:
+  ;; display: (method (object)
+  ;;            (concatenate (get object "name")
+  ;;                         " :: "
+  ;;                         (get object "details" "type"))))
 
 (define-type "constant" "Constant"
-  display: (method (object)
-             (concatenate (get object "name")
-                          " :: "
-                          (get object "details" "type"))))
-(define-type "slot" "Slot"
-  display: (method (object)
-             (concatenate (get object "name")
-                          " :: "
-                          (get object "details" "type"))))
+  display: (method (object element)
+             (bind ((name (create-element "span" parent: element)))
+               (set! (js:get-property element "innerText")
+                     (concatenate (get object "name") " :: ")))
+             (attach (make <object-component>
+                           object: (get object "details" "type"))
+                     element)))
+  ;; TODO: value not working yet, hide for now
+  ;; (get object "details" "value")
+
+
+(define-type "slot" "Slot")
+  ;; TODO:
+  ;; display: (method (object)
+  ;;            (concatenate (get object "name")
+  ;;                         " :: "
+  ;;                         (get object "details" "type"))))
 
 (define-type "macro" "Macro")
 
 (define-type "domain" "Domain")
 
+(define-type "complex-type-expression" "Complex type expression")
+
+(define-type "parameter" "Parameter")
 
 ;; environment object
 
