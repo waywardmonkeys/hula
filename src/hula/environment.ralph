@@ -112,9 +112,10 @@
   display: (method (object)
              (concatenate (get object "name")
                           " :: "
-                          (get object "details" "type")
-                          " = "
-                          (get object "details" "value"))))
+                          (get object "details" "type"))))
+                          ;; TODO: value not working yet, hide for now
+                          ;; " = "
+                          ;; (get object "details" "value"))))
 
 (define-type "constant" "Constant"
   has-source?: #t
