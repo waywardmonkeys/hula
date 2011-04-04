@@ -8,7 +8,7 @@
   identifier
   name
   (collections [])
-  has-source?
+  (has-source? #t)
   display)
 
 (define-class <environment-collection> ()
@@ -32,6 +32,7 @@
                              name: name]))))
 
 (define-type "library" "Library"
+  has-source?: #f
   collections: [(make <environment-collection>
                       identifier: "modules"
                       name: "Modules"
@@ -46,6 +47,7 @@
                       type: "library")])
 
 (define-type "module" "Module"
+  has-source?: #f
   collections: [(make <environment-collection>
                       identifier: "used-modules"
                       name: "Used modules"
@@ -55,7 +57,6 @@
                       name: "Defintions")])
 
 (define-type "class" "Class"
-  has-source?: #t
   collections: [(make <environment-collection>
                       identifier: "direct-slots"
                       name: "Direct slots"
@@ -90,25 +91,21 @@
                       name: "All methods"
                       type: "method")])
 
-(define-type "function" "Function"
-  has-source?: #t)
+(define-type "function" "Function")
 
 (define-type "generic-function" "Generic function"
-  has-source?: #t
   collections: [(make <environment-collection>
                       identifier: "methods"
                       name: "Methods"
                       type: "method")])
 
 (define-type "method" "method"
-  has-source?: #t
   display: (method (object)
              (bind ((specializers (get object "details" "specializers")))
                (concatenate (get object "name")
                             " (" (join specializers ", ") ")"))))
 
 (define-type "variable" "Variable"
-  has-source?: #t
   display: (method (object)
              (concatenate (get object "name")
                           " :: "
@@ -117,21 +114,33 @@
                           ;; " = "
                           ;; (get object "details" "value"))))
 
-(define-type "constant" "Constant"
-  has-source?: #t
-  display: (method (object)
-             (concatenate (get object "name")
-                          " :: "
-                          (get object "details" "type")
-                          " = "
-                          (get object "details" "value"))))
-
-(define-type "slot" "Slot"
-  has-source?: #t
+(define-type "global-variable" "Global variable"
   display: (method (object)
              (concatenate (get object "name")
                           " :: "
                           (get object "details" "type"))))
+
+(define-type "thread-variable" "Thread variable"
+  display: (method (object)
+             (concatenate (get object "name")
+                          " :: "
+                          (get object "details" "type"))))
+
+(define-type "constant" "Constant"
+  display: (method (object)
+             (concatenate (get object "name")
+                          " :: "
+                          (get object "details" "type"))))
+(define-type "slot" "Slot"
+  display: (method (object)
+             (concatenate (get object "name")
+                          " :: "
+                          (get object "details" "type"))))
+
+(define-type "macro" "Macro")
+
+(define-type "domain" "Domain")
+
 
 ;; environment object
 
