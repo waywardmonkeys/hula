@@ -188,7 +188,6 @@
             (set! (get details detail)
                   (convert-detail (get details detail))))
           (keys details)))
-    (log object)
     object))
 
 

@@ -472,7 +472,6 @@
                   (method (event)
                     (show editor)
                     (bind ((code (get event "data")))
-                      (log code)
                       (set! (source editor)
                             (decode-json code))))))
   (when object
