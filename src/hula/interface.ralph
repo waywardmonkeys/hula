@@ -75,47 +75,67 @@
     (add-class element "window")
     (append-child element footer)))
 
-;; remote
+;; request component
 
-(define-class <remote-window> (<window>)
+(define-class <request-component> (<component>)
+  target
   spinner
-  not-available)
+  not-available
+  request)
 
-(define-generic request ((window <remote-window>)))
-
-(define-generic request-url ((window <remote-window>)))
-
-(define-function initialize ((window <remote-window>) #rest rest)
-  (apply next-method window rest)
-  (bind ((spinner (set! (get window "spinner")
+(define-function initialize ((component <request-component>) #rest rest)
+  (apply next-method component rest)
+  (bind ((element (set! (get component "element")
+                        (create-element "div" class: "remote")))
+         (spinner (set! (get component "spinner")
                         (make <spinner>)))
-         (not-available (set! (get window "not-available")
-                              (make <not-available>)))
-         (content (get window "content")))
-    (attach spinner content)
-    (attach not-available content)))
+         (not-available (set! (get component "not-available")
+                              (make <not-available>))))
+    (attach spinner element)
+    (attach not-available element)))
 
-(define-function request ((window <remote-window>))
-  (bind ((spinner (get window "spinner"))
-         (not-available (get window "not-available"))
-         (object (get window "object")))
+(define-generic request (object))
+
+(define-generic request-url (object))
+
+(define-function request ((component <request-component>))
+  (bind ((element (get component "element"))
+         (spinner (get component "spinner"))
+         (not-available (get component "not-available"))
+         (target (get component "target")))
     (show spinner)
     (hide not-available)
-    (if-bind (request (get window "request"))
+    (show component)
+    (if-bind (request (get component "request"))
       (cancel request))
-    (bind ((request (set! (get window "request")
-                          (make <request> url: (request-url window)))))
+    (bind ((request (set! (get component "request")
+                          (make <request> url: (request-url target)))))
       (add-listener request "data"
                     (method (event)
-                      (hide spinner)
-                      (hide not-available)
-                      (trigger-event window event)))
+                      (hide component)
+                      (trigger-event target event)))
       (add-listener request "error"
                     (method (event)
                       (hide spinner)
                       (show not-available)
-                      (trigger-event window event)))
+                      (trigger-event target event)))
       (send request))))
+
+;; remote
+
+(define-class <remote-window> (<window>)
+  request-component)
+
+(define-function initialize ((window <remote-window>) #rest rest)
+  (apply next-method window rest)
+  (bind ((request-component
+          (set! (get window "request-component")
+                (make <request-component> target: window)))
+         (content (get window "content")))
+    (attach request-component content)))
+
+(define-function request ((window <remote-window>))
+  (request (get window "request-component")))
 
 ;; note
 
