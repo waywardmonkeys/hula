@@ -186,7 +186,6 @@ CodeMirror.defineMode("dylan", function(config, parserConfig) {
 	for (name in patterns) {
 	    if (patterns.hasOwnProperty(name)) {
 		var pattern = patterns[name];
-		console.log("testing:", pattern);
 		if ((pattern instanceof Array
 		     && pattern.some(function (p) {
 			 return stream.match(p);
