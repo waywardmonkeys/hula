@@ -31,6 +31,20 @@
                             [identifier: identifier
                              name: name]))))
 
+(define-function add-object-list (element objects)
+  (append-child element (create-text-node " ("))
+  (do (method (object)
+        (attach (make <object-component>
+                      object: object
+                      simple?: #t)
+                element)
+        (append-child element (create-text-node ", ")))
+      objects)
+  ;; remove superfluous last comma
+  (unless (empty? objects)
+    (delete-element (js:get-property element "lastChild")))
+  (append-child element (create-text-node ")")))
+
 (define-type "library" "Library"
   has-source?: #f
   collections: [(make <environment-collection>
@@ -93,22 +107,9 @@
   display: (method (object element)
              (append-child element
                            (create-text-node
-                            (concatenate (get object "name") " (")))
-             (bind ((superclasses (get object "details" "direct-superclasses")))
-               (do (method (superclass)
-                     (attach (make <object-component>
-                                   object: superclass
-                                   simple?: #t)
-                             element)
-                     (append-child element
-                                   (create-text-node ", ")))
-                   superclasses)
-               ;; remove superfluous last comma
-               (unless (empty? superclasses)
-                 (delete-element (js:get-property element "lastChild"))))
-             (append-child element
-                           (create-text-node ")"))))
-
+                            (concatenate (get object "name") " ")))
+             (add-object-list element
+                              (get object "details" "direct-superclasses"))))
 
 (define-type "function" "Function")
 
