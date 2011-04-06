@@ -431,6 +431,10 @@ menu command:hover {
     font-family: Monaco, monospace;
 }
 
+.object .info {
+    color: #555
+}
+
 /* search field */
 
 section.search {
@@ -448,8 +452,13 @@ section.search input {
 
 /* environment objects */
 
-.object.parent {
+.header .qualified-object {
     margin-top: 3px;
+}
+
+.qualified-object .object {
+    display: inline-block;
+    margin-right: 5px;
 }
 
 /*

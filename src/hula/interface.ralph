@@ -496,9 +496,8 @@
                             (decode-json code))))))
   (when object
     (bind ((object-component
-            (make <object-component>
-                  object: object
-                  parent?: #t)))
+            (make <qualified-object-component>
+                  object: object)))
       (attach object-component
               (get window "header")))
     (request window)))
@@ -586,9 +585,8 @@
          (search (set! (get browser "search")
                        (make <search-field> instant?: #t)))
          (object-component (when object
-                             (make <object-component>
-                                   object: object
-                                   parent?: #t))))
+                             (make <qualified-object-component>
+                                   object: object))))
     (when object
       (attach object-component
               (get browser "header")))
@@ -699,11 +697,10 @@
 ;; component for <environment-object>
 
 (define-class <object-component> (<component>)
-  object
-  parent?)
+  object)
 
 (define-function initialize ((component <object-component>)
-                             #rest rest #key object parent? simple?)
+                             #rest rest #key object simple?)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
                         (create-element "div" class: "object")))
@@ -715,8 +712,6 @@
     (set! (attribute element "title")
           (get type "name"))
     (attach request-component component)
-    (when parent?
-      (add-class element "parent"))
     (bind-methods ((display ()
                      (if (and type-display
                               (not simple?))
@@ -761,3 +756,21 @@
                    object: (get component "object")))))
         (get type "collections"))
     items))
+
+;; qualified object
+
+(define-class <qualified-object-component> (<component>)
+  object)
+
+(define-function initialize ((component <qualified-object-component>)
+                             #rest rest #key object)
+  (apply next-method component rest)
+  (bind ((element (set! (get component "element")
+                        (create-element "div" class: "qualified-object"))))
+    (do (method (object)
+          (attach (make <object-component>
+                        object: object
+                        simple?: #t)
+                  element))
+        (concatenate [object]
+                     (reverse (get object "parents"))))))
