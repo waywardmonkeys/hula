@@ -89,7 +89,26 @@
                 (make <environment-collection>
                       identifier: "all-methods"
                       name: "All methods"
-                      type: "method")])
+                      type: "method")]
+  display: (method (object element)
+             (append-child element
+                           (create-text-node
+                            (concatenate (get object "name") " (")))
+             (bind ((superclasses (get object "details" "direct-superclasses")))
+               (do (method (superclass)
+                     (attach (make <object-component>
+                                   object: superclass
+                                   simple?: #t)
+                             element)
+                     (append-child element
+                                   (create-text-node ", ")))
+                   superclasses)
+               ;; remove superfluous last comma
+               (unless (empty? superclasses)
+                 (delete-element (js:get-property element "lastChild"))))
+             (append-child element
+                           (create-text-node ")"))))
+
 
 (define-type "function" "Function")
 
@@ -125,11 +144,12 @@
 
 (define-type "constant" "Constant"
   display: (method (object element)
-             (bind ((name (create-element "span" parent: element)))
-               (set! (js:get-property element "innerText")
-                     (concatenate (get object "name") " :: ")))
+             (append-child element
+                           (create-text-node
+                            (concatenate (get object "name") " :: ")))
              (attach (make <object-component>
-                           object: (get object "details" "type"))
+                           object: (get object "details" "type")
+                           simple?: #t)
                      element)))
   ;; TODO: value not working yet, hide for now
   ;; (get object "details" "value")
@@ -159,6 +179,15 @@
   (parents [])
   details)
 
+(define-function dereference (object)
+  (bind ((objects (if object
+                      (concatenate (get object "parents")
+                                   [(get object "identifier")])
+                      [])))
+    (if (not (empty? objects))
+        (concatenate "/" (join objects "/"))
+        "")))
+
 (define-function convert-detail (object)
   (select object instance?
     ((<array>)
@@ -182,7 +211,7 @@
     (do (method (property)
           (set! (get object property)
                 (get thing property)))
-        ["parents" "details"])
+        ["parents" "details" "incomplete?"])
     (bind ((details (get object "details")))
       (do (method (detail)
             (set! (get details detail)

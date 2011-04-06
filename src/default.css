@@ -274,17 +274,20 @@ button.close:hover {
 }
 */
 
-
 .view.editor div.editor {
     height: 100%;
     overflow: auto;
     -webkit-box-flex: 1;
     -moz-box-flex: 1;
-    display: -webkit-box !important;
-    display: -moz-box !important;
+    display: none;
     -webkit-box-orient: vertical;
     -moz-box-orient: vertical;
     display: none;
+}
+
+.view.editor div.editor.active {
+    display: -webkit-box !important;
+    display: -moz-box !important;
 }
 
 div.editor .CodeMirror,
@@ -365,9 +368,21 @@ menu command:hover {
     width: 100%;
 }
 
-/* spinner, not-available */
 
-.spinner, .not-available {
+/* remote */
+
+.remote {
+    display: none;
+}
+
+.remote.active {
+    -webkit-box-flex: 1;
+    -moz-box-flex: 1;
+    display: -webkit-box !important;
+    display: -moz-box !important;
+}
+
+.activity, .not-available {
     position: relative;
     -webkit-box-flex: 1;
     -moz-box-flex: 1;
@@ -387,8 +402,26 @@ menu command:hover {
     margin-top: 10px;
 }
 
-.spinner.active {
+.activity.active {
     background: url(images/spinner.gif) no-repeat center center;
+}
+
+.object .remote.active,
+.object .remote.active .activity.active,
+.object .remote.active .not-available.active {
+    display: inline-block !important;
+    position: inherit;
+}
+
+.object .remote .not-available {
+    color: #777;
+    margin: 0
+}
+
+.object .activity.active {
+    background-image: url(images/activity.gif);
+    width: 16px;
+    height: 12px;
 }
 
 /* object */
