@@ -710,6 +710,8 @@
          (type (get object "type"))
          (type-display (get type "display")))
     (add-class element (get type "identifier"))
+    (set! (attribute element "title")
+          (get type "name"))
     (attach request-component component)
     (when parent?
       (add-class element "parent"))
