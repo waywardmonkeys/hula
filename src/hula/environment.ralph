@@ -119,12 +119,19 @@
                       name: "Methods"
                       type: "method")])
 
-(define-type "method" "method")
-  ;; TODO:
-  ;; display: (method (object)
-  ;;            (bind ((specializers (get object "details" "specializers")))
-  ;;              (concatenate (get object "name")
-  ;;                           " (" (join specializers ", ") ")"))))
+(define-type "method" "method"
+  display: (method (object element)
+             (append-child element
+                           (create-text-node
+                            (concatenate (get object "name") " ")))
+             (add-object-list element
+                              (get object "details" "specializers"))
+             (append-child element
+                           (create-text-node " => "))
+             (add-object-list element
+                              (map (rcurry get "details" "type")
+                                   (get object "details" "values")))))
+
 
 (define-type "variable" "Variable")
   ;; TODO: display
@@ -153,7 +160,6 @@
                            simple?: #t)
                      element)))
   ;; TODO: value not working yet, hide for now
-  ;; (get object "details" "value")
 
 
 (define-type "slot" "Slot")
