@@ -190,13 +190,10 @@
   details)
 
 (define-function dereference (object)
-  (bind ((objects (if object
-                      (concatenate (get object "parents")
-                                   [(get object "identifier")])
-                      [])))
-    (if (not (empty? objects))
-        (concatenate "/" (join objects "/"))
-        "")))
+  (bind ((objects (concatenate (map (rcurry get "identifier")
+                                    (get object "parents"))
+                               [(get object "identifier")])))
+    (concatenate "/" (join objects "/"))))
 
 (define-function convert-detail (object)
   (select object instance?
@@ -208,26 +205,23 @@
      (as-environment-object object))))
 
 (define-function as-environment-object (thing)
-  (bind ((object (if (instance? thing <string>)
-                     (make <environment-object>
-                           name: thing
-                           identifier: thing)
-                     (make <environment-object>
-                           name: (get thing "name")
-                           identifier: (or (get thing "identifier")
-                                           (get thing "name"))))))
+  (bind ((object (make <environment-object>
+                       name: (get thing "name")
+                       identifier: (or (get thing "identifier")
+                                       (get thing "name")))))
     (set! (get object "type")
           (get *types* (get thing "type")))
+    (if-bind (parents (get thing "parents"))
+      (set! (get object "parents")
+            (map as-environment-object
+                 parents)))
     (do (method (property)
           (set! (get object property)
                 (get thing property)))
-        ["parents" "details" "incomplete?"])
+        ["details" "incomplete?"])
     (bind ((details (get object "details")))
       (do (method (detail)
             (set! (get details detail)
                   (convert-detail (get details detail))))
           (keys details)))
     object))
-
-
-

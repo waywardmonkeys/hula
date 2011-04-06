@@ -644,7 +644,9 @@
          (collection (get browser "collection"))
          (prefix (get browser "prefix")))
     (concatenate "/api/" (get collection "identifier")
-                 (dereference object)
+                 (if object
+                     (dereference object)
+                     "")
                  (if (and prefix
                           (not (empty? prefix)))
                      (concatenate "?" (encode (make-object
