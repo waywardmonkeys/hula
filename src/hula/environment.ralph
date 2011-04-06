@@ -68,7 +68,21 @@
                       type: "module")
                 (make <environment-collection>
                       identifier: "definitions"
-                      name: "Defintions")])
+                      name: "Defintions")]
+  display: (method (object element)
+             (append-child element
+                           (create-text-node
+                            (concatenate (get object "name") " ")))
+             (bind ((info (create-element "span"
+                                          class: "info"
+                                          parent: element)))
+               (append-child info
+                             (create-text-node
+                              (concatenate
+                               "(" (as-string
+                                    (get object "details" "definitions"))
+                               " definitions)"))))))
+
 
 (define-type "class" "Class"
   collections: [(make <environment-collection>
