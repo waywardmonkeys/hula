@@ -132,42 +132,31 @@
                               (map (rcurry get "details" "type")
                                    (get object "details" "values")))))
 
-
-(define-type "variable" "Variable")
-  ;; TODO: display
-
-(define-type "global-variable" "Global variable")
-  ;; TODO:
-  ;; display: (method (object)
-  ;;            (concatenate (get object "name")
-  ;;                         " :: "
-  ;;                         (get object "details" "type"))))
-
-(define-type "thread-variable" "Thread variable")
-  ;; TODO:
-  ;; display: (method (object)
-  ;;            (concatenate (get object "name")
-  ;;                         " :: "
-  ;;                         (get object "details" "type"))))
-
-(define-type "constant" "Constant"
-  display: (method (object element)
-             (append-child element
-                           (create-text-node
-                            (concatenate (get object "name") " :: ")))
-             (attach (make <object-component>
-                           object: (get object "details" "type")
-                           simple?: #t)
-                     element)))
+(define-function display-name/type (object element)
+  (append-child element
+                (create-text-node
+                 (concatenate (get object "name") " :: ")))
+  (attach (make <object-component>
+                object: (get object "details" "type")
+                simple?: #t)
+          element))
   ;; TODO: value not working yet, hide for now
 
 
-(define-type "slot" "Slot")
-  ;; TODO:
-  ;; display: (method (object)
-  ;;            (concatenate (get object "name")
-  ;;                         " :: "
-  ;;                         (get object "details" "type"))))
+(define-type "variable" "Variable"
+  display: display-name/type)
+
+(define-type "global-variable" "Global variable"
+  display: display-name/type)
+
+(define-type "thread-variable" "Thread variable"
+  display: display-name/type)
+
+(define-type "constant" "Constant"
+  display: display-name/type)
+
+(define-type "slot" "Slot"
+  display: display-name/type)
 
 (define-type "macro" "Macro")
 
