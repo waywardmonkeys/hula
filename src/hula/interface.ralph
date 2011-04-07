@@ -491,9 +491,14 @@
     (add-listener window "data"
                   (method (event)
                     (show editor)
-                    (bind ((code (get event "data")))
+                    (bind ((info (decode-json (get event "data"))))
                       (set! (source editor)
-                            (decode-json code))))))
+                            (get info "source"))
+                      (set! (footer-label window)
+                            (concatenate
+                             (get info "filename") " ("
+                             (get info "line") " &ndash; "
+                             (get info "end-line") ")"))))))
   (when object
     (bind ((object-component
             (make <qualified-object-component>
