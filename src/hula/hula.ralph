@@ -4,16 +4,18 @@
 
 (define-function main ()
   (log "HULA")
-  (bind ((editor (make <editor-window>))
-         (note (make <note>
-                     label: "Todo"
-                     text: "Simple test"))
-         (arrow (make <arrow>
-                      source: editor
-                      target: note
-                      offset: 50)))
-        (do (rcurry attach body)
-            [*workspace* arrow editor window note])
-        (attach *context-menu* *workspace*)
-        (set! (view-position editor) [100 100])
-        (set! (view-position note) [250 200])))
+  (attach *workspace* body)
+  (attach *context-menu* *workspace*))
+
+  ;; (bind ((editor (make <editor-window>))
+  ;;        (note (make <note>
+  ;;                    label: "Todo"
+  ;;                    text: "Simple test"))
+  ;;        (arrow (make <arrow>
+  ;;                     source: editor
+  ;;                     target: note
+  ;;                     offset: 50)))
+  ;;       (do (rcurry attach body)
+  ;;           [*workspace* arrow editor window note])
+  ;;       (set! (view-position editor) [100 100])
+  ;;       (set! (view-position note) [250 200])))
