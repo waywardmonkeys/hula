@@ -71,9 +71,20 @@
   (apply next-method window rest)
   (bind ((element (get window "element"))
          (footer (set! (get window "footer")
-                       (create-element "div" class: "footer"))))
-    (add-class element "window")
-    (append-child element footer)))
+                       (create-element "div"
+                                       class: "footer"
+                                       parent: element)))
+         (footer-label
+          (set! (get window "footer-label")
+                (create-element "label"
+                                parent: footer))))
+    (add-class element "window")))
+
+(define-function footer-label ((window <window>))
+  (js:get-property window "footer-label" "innerHTML"))
+
+(define-function (setter footer-label) ((window <window>) label)
+  (set! (js:get-property window "footer-label" "innerHTML") label))
 
 ;; request component
 
@@ -410,10 +421,7 @@
 
 (define-function initialize ((window <search-window>))
   (next-method window)
-  (bind ((footer-label-element
-          (set! (get window "footer-label")
-                (create-element "label")))
-         (content (get window "content"))
+  (bind ((content (get window "content"))
          (results (set! (get window "results")
                         (create-element "ul"
                                         parent: content)))
@@ -422,9 +430,7 @@
     (attach search window)
     (add-listener search "search"
                   (method (event)
-                    (perform-search window (get event "query"))))
-    (append-child (get window "footer")
-                  footer-label-element))
+                    (perform-search window (get event "query")))))
   (add-class (get window "element") "search")
   (set! (header-label window) "Search")
   (set! (footer-label window) "0 Results"))
@@ -432,12 +438,6 @@
 (define-function attach ((window <search-window>) element)
   (next-method window element)
   (focus (get window "search")))
-
-(define-function footer-label ((window <search-window>))
-  (js:get-property window "footer-label" "innerHTML"))
-
-(define-function (setter footer-label) ((window <search-window>) label)
-  (set! (js:get-property window "footer-label" "innerHTML") label))
 
 (define-function perform-search ((window <search-window>) query)
   (search query
