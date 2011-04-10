@@ -1,7 +1,7 @@
 (define-module interface
   import: (runtime/core runtime/regexp runtime/watch
            toolbox/dom toolbox/interface
-           hula/search hula/environment)
+           hula/search hula/environment hula/grapher)
   export: (<window> <resizer>
            *context-menu* *workspace*))
 
@@ -451,6 +451,28 @@
               ;; - add each result as component
               (log "results:" results)))))
 
+;; graph window
+
+(define-class <grapher-window> (<window>)
+  object)
+
+(define-function initialize ((window <grapher-window>)
+                             #rest rest #key graph object)
+  (apply next-method window rest)
+  (bind ((object-component (make <qualified-object-component>
+                                 object: object))
+         (grapher (set! (get window "grapher")
+                        (make <grapher>
+                              object: object
+                              graph: graph))))
+    (attach object-component
+            (get window "header"))
+    (attach grapher
+            (get window "content")))
+  (add-class (get window "element") "graph")
+  (set! (header-label window)
+        (get graph "name")))
+
 ;; editor component
 
 (define-class <editor> (<component>))
@@ -760,6 +782,15 @@
                    collection: collection
                    object: (get component "object")))))
         (get type "collections"))
+    (do (method (graph)
+          (set! (get items (get graph "name"))
+                (method (event)
+                  (show-view <grapher-window>
+                   (js:get-property event "pageX")
+                   (js:get-property event "pageY")
+                   graph: graph
+                   object: (get component "object")))))
+        (get type "graphs"))
     items))
 
 ;; qualified object

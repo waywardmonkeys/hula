@@ -1,0 +1,12 @@
+(define-module grapher
+  import: (runtime/core toolbox/interface)
+  export: (<grapher>))
+
+(define-class <grapher> (<component>)
+  object
+  graph)
+
+(define-function initialize ((component <grapher>) #rest rest #key label)
+  (apply next-method component rest)
+  (bind ((element (set! (get component "element")
+                        (create-element "div" class: "grapher"))))))

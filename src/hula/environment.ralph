@@ -8,6 +8,7 @@
   identifier
   name
   (collections [])
+  (graphs [])
   (has-source? #t)
   display)
 
@@ -15,6 +16,11 @@
   identifier
   name
   type)
+
+(define-class <environment-graph> ()
+  name
+  left
+  right)
 
 (define *root-collections*
   [(make <environment-collection>
@@ -83,6 +89,17 @@
                                     (get object "details" "definitions"))
                                " definitions)"))))))
 
+(define direct-superclasses
+  (make <environment-collection>
+        identifier: "direct-superclasses"
+        name: "Direct superclasses"
+        type: "class"))
+
+(define direct-subclasses
+  (make <environment-collection>
+        identifier: "direct-subclasses"
+        name: "Direct subclasses"
+        type: "class"))
 
 (define-type "class" "Class"
   collections: [(make <environment-collection>
@@ -93,18 +110,12 @@
                       identifier: "all-slots"
                       name: "All slots"
                       type: "slot")
-                (make <environment-collection>
-                      identifier: "direct-superclasses"
-                      name: "Direct superclasses"
-                      type: "class")
+                direct-superclasses
                 (make <environment-collection>
                       identifier: "all-superclasses"
                       name: "All superclasses"
                       type: "class")
-                (make <environment-collection>
-                      identifier: "direct-subclasses"
-                      name: "Direct subclasses"
-                      type: "class")
+                direct-subclasses
                 ;; TODO: not supported by backend yet
                 ;; (make <environment-collection>
                 ;;       identifier: "all-subclasses"
@@ -118,6 +129,10 @@
                       identifier: "all-methods"
                       name: "All methods"
                       type: "method")]
+  graphs: [(make <environment-graph>
+                 name: "Class graph"
+                 left: direct-superclasses
+                 right: direct-subclasses)]
   display: (method (object element)
              (append-child element
                            (create-text-node
