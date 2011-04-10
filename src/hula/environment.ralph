@@ -176,7 +176,8 @@
 
 (define-type "domain" "Domain")
 
-(define-type "complex-type-expression" "Complex type expression")
+(define-type "complex-type-expression" "Complex type expression"
+  has-source?: #f)
 
 (define-type "parameter" "Parameter")
 
