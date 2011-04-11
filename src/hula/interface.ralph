@@ -103,7 +103,8 @@
          (not-available (set! (get component "not-available")
                               (make <not-available>))))
     (attach activity element)
-    (attach not-available element)))
+    (attach not-available element)
+    (hide component)))
 
 (define-generic request (object))
 
@@ -483,9 +484,9 @@
          (text (set! (get editor "text")
                      (create-element "textarea"
                                      parent: element))))
-    (when source
+    (if source
       (set! (js:get-property text "innerHTML") source)
-      (show editor))
+      (hide editor))
     (set! (get editor "editor")
           ((js:get-property "CodeMirror" "fromTextArea")
            text (make-object
@@ -565,7 +566,7 @@
                                        (get menu "x"))
                                    (== (js:get-property event "pageY")
                                        (get menu "y")))
-                        (remove-class element "active")))))
+                        (hide menu)))))
     (add-listener target-element "contextmenu"
                   (curry show menu target))))
 
@@ -592,7 +593,7 @@
                   (add-listener command "click" (get items label))))
         (keys items))
     ;; show menu
-    (add-class element "active"))
+    (next-method menu))
   ;; prevent default menu
   (prevent-default event)
   (stop-propagation event)))
@@ -710,7 +711,8 @@
 
 (define-function initialize ((activity <activity>))
   (set! (get activity "element")
-        (create-element "div" class: "activity")))
+        (create-element "div" class: "activity"))
+  (hide activity))
 
 ;; N/A
 
@@ -719,7 +721,8 @@
 (define-function initialize ((not-available <not-available>))
   (bind ((element (set! (get not-available "element")
                         (create-element "div" class: "not-available"))))
-    (set! (js:get-property element "innerHTML") "Not available")))
+    (set! (js:get-property element "innerHTML") "Not available")
+    (hide not-available)))
 
 ;; component for <environment-object>
 
@@ -803,10 +806,12 @@
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
                         (create-element "div" class: "qualified-object"))))
+    (attach (make <object-component>
+                  object: object)
+            element)
     (do (method (object)
           (attach (make <object-component>
                         object: object
                         simple?: #t)
                   element))
-        (concatenate [object]
-                     (reverse (get object "parents"))))))
+        (reverse (get object "parents")))))
