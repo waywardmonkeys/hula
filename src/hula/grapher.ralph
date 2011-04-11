@@ -2,11 +2,78 @@
   import: (runtime/core toolbox/interface)
   export: (<grapher>))
 
+;; grapher
+
 (define-class <grapher> (<component>)
   object
   graph)
 
-(define-function initialize ((component <grapher>) #rest rest #key label)
+(define-function initialize ((component <grapher>) #rest rest #key object graph)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
-                        (create-element "div" class: "grapher"))))))
+                        (create-element "div" class: "grapher")))
+         (graph (set! (get component "graph")
+                      (make <graph-component> object: object graph: graph))))
+    (attach graph element)))
+
+;; node
+
+(define-class <graph-node> (<component>)
+  left
+  object
+  right)
+
+(define-function initialize ((node <graph-node>) #rest rest #key object)
+  (apply next-method node rest)
+  (bind ((element (set! (get node "element")
+                        (create-element "div" class: "node")))
+         (left (set! (get node "left")
+                     (create-element "button" class: "left")))
+         (object (set! (get node "object")
+                       (make <object-component>
+                             object: object
+                             simple?: #t)))
+         (right (set! (get node "right")
+                      (create-element "button" class: "right"))))
+    (append-child element left)
+    (attach object element)
+    (append-child element right)))
+
+;; graph part
+
+(define-class <graphs> (<component>)
+  object
+  collection)
+
+(define-function initialize ((graphs <graphs>) #rest rest #key object)
+  (apply next-method graphs rest)
+  (bind ((element (set! (get graphs "element")
+                        (create-element "div" class: "graphs")))
+
+;; graph
+
+(define-class <graph-component> (<component>)
+  before
+  node
+  after)
+
+(define-function initialize ((component <component-component>) #rest rest
+                             #key object graph)
+  (apply next-method component rest)
+  (bind ((element (set! (get component "element")
+                        (create-element "div" class: "graph")))
+         (before (set! (get component "before")
+                       (make <graphs>
+                             object: object
+                             collection: (get graph "left"))))
+         (node (set! (get component "node")
+                     (make <component-node> object: object)))
+         (after (set! (get component "after")
+                      (make <graphs>
+                            object: object
+                            collection: (get graph "right")))))
+    (attach before element)
+    (add-class (get before "element") "before")
+    (attach node element)
+    (attach after element)
+    (add-class (get after "element") "after"))

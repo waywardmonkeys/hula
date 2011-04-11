@@ -1,0 +1,192 @@
+.grapher {
+    white-space: nowrap;
+}
+
+.target, .before, .after {
+    display: inline-block;
+    font-family: monospace;
+    position: relative;
+}
+
+.grapher > *, .graph, .graph > * {
+    vertical-align: top;
+}
+
+
+.target:first-child:last-child {
+    background: none;
+}
+
+
+/* animation */
+
+.after.hidden, .before.hidden {
+    opacity: 0;
+    height: 0;
+    width: 0;
+}
+
+.after, .before {
+    position: relative;
+    -webkit-transition-property: height, width, opacity;
+    -webkit-transition-duration: 0.4s;
+    opacity: 1;
+    height: auto;
+    width: auto;
+}
+
+/* button */
+
+button {
+    position: absolute;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    top: 4px;
+    width: 12px;
+    height: 9px;
+}
+
+button.open {
+    background: url(arrow-open.svg) no-repeat;
+}
+
+button {
+    background-image: url(arrow-closed.svg);
+}
+
+.grapher > .target button:last-child,
+.after button {
+    right: -3px;
+}
+
+.grapher > .target button:first-child,
+.before button {
+    left: -3px;
+
+    -moz-transform: scaleX(-1);
+    -o-transform: scaleX(-1);
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+}
+
+
+/* graph */
+
+.graph {
+    padding: 5px 15px
+}
+
+.graph:first-of-type {
+    padding-top: 0
+}
+
+/* before */
+
+.before {
+    text-align: right;
+}
+
+.before {
+    padding-right: 5px;
+    background: url(horizontal.svg) right 7px no-repeat;
+    background-size: 5px 3px;
+}
+
+.before .target {
+    padding-left: 20px;
+    background: url(horizontal.svg) left 7px no-repeat;
+    background-size: 15px 3px;
+}
+
+.before > .graph:first-of-type {
+    background: url(vertical.svg) no-repeat,
+                url(horizontal.svg) no-repeat;
+    background-position: right 9px,
+                         right 7px;
+    background-size: 3px 100%,
+                     12px 3px;
+}
+
+.before > .graph {
+    background: url(horizontal.svg) no-repeat,
+                url(vertical.svg) repeat-y;
+    background-position: right 12px, /* TODO: right 2px top 12px */
+                         right top;
+    background-size: 10px 3px,
+                     3px 100%;
+}
+
+.before > .graph:last-of-type {
+    background: url(L2.svg) no-repeat,
+                url(horizontal.svg) no-repeat,
+                url(vertical.svg) no-repeat;
+    background-position: right 12px,
+                         right 12px, /* TODO: right 2px top 12px */
+			 right top;
+    background-size: 3px,
+                     10px 3px,
+		     3px 12px;
+}
+
+.before > .graph:last-of-type:first-of-type {
+    background: url(horizontal.svg) right 7px no-repeat;
+    background-size: 10px 3px;
+}
+
+/* target */
+
+.grapher > .target {
+    padding-left: 20px;
+    padding-right: 20px;
+    background: url(horizontal.svg) left 7px no-repeat,
+                url(horizontal.svg) right 7px no-repeat;
+    background-size: 15px 3px;
+}
+
+
+/* after */
+
+.after {
+    padding-left: 5px;
+    background: url(horizontal.svg) left 7px no-repeat;
+    background-size: 5px 3px;
+}
+
+.after .target {
+    padding-right: 20px;
+    background: url(horizontal.svg) right 7px no-repeat;
+    background-size: 15px 3px;
+}
+
+.after > .graph:first-of-type {
+    background: url(vertical.svg) left 9px no-repeat,
+                url(horizontal.svg) left 7px no-repeat;
+    background-size: 3px 100%,
+                     12px 3px;
+}
+
+.after > .graph {
+    background: url(horizontal.svg) 2px 12px no-repeat,
+                url(vertical.svg) left top repeat-y;
+    background-size: 10px 3px,
+                     3px 100%;
+}
+
+.after > .graph:last-of-type {
+    background: url(L.svg) no-repeat,
+                url(horizontal.svg) no-repeat,
+                url(vertical.svg) no-repeat;
+    background-position: left 12px,
+                         2px 12px,
+			 left top;
+    background-size: 3px,
+                     10px 3px,
+		     3px 12px;
+}
+
+.after > .graph:last-of-type:first-of-type {
+    background: url(horizontal.svg) left 7px no-repeat;
+    background-size: 10px 3px;
+}
