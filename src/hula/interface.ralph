@@ -665,14 +665,16 @@
   (delete-children (get browser "results"))
   (next-method browser))
 
+(define-function request-url ((collection <environment-collection>)
+                              #key object)
+  (concatenate "/api/" (get collection "identifier")
+               (if object (dereference object) "")))
+
 (define-function request-url ((browser <browser>))
   (bind ((object (get browser "object"))
          (collection (get browser "collection"))
          (prefix (get browser "prefix")))
-    (concatenate "/api/" (get collection "identifier")
-                 (if object
-                     (dereference object)
-                     "")
+    (concatenate (request-url collection object: object)
                  (if (and prefix
                           (not (empty? prefix)))
                      (concatenate "?" (encode (make-object
