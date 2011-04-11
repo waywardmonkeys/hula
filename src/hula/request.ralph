@@ -1,0 +1,50 @@
+(define-module request
+  import: (runtime/core toolbox/interface toolbox/request)
+  export: (request <request-component>))
+
+;; request component
+
+(define-class <request-component> (<component>)
+  target
+  activity
+  not-available
+  request)
+
+(define-function initialize ((component <request-component>) #rest rest)
+  (apply next-method component rest)
+  (bind ((element (set! (get component "element")
+                        (create-element "div" class: "remote")))
+         (activity (set! (get component "activity")
+                        (make <activity>)))
+         (not-available (set! (get component "not-available")
+                              (make <not-available>))))
+    (attach activity element)
+    (attach not-available element)
+    (hide component)))
+
+(define-generic request (object))
+
+(define-generic request-url (object))
+
+(define-function request ((component <request-component>))
+  (bind ((element (get component "element"))
+         (activity (get component "activity"))
+         (not-available (get component "not-available"))
+         (target (get component "target")))
+    (show activity)
+    (hide not-available)
+    (show component)
+    (if-bind (request (get component "request"))
+      (cancel request))
+    (bind ((request (set! (get component "request")
+                          (make <request> url: (request-url target)))))
+      (add-listener request "data"
+                    (method (event)
+                      (hide component)
+                      (trigger-event target event)))
+      (add-listener request "error"
+                    (method (event)
+                      (hide activity)
+                      (show not-available)
+                      (trigger-event target event)))
+      (send request))))
