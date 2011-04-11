@@ -632,12 +632,14 @@
                     (request browser)))
     (add-listener browser "data"
                   (method (event)
-                    (bind ((result (decode-json (get event "data")))
-                           (parents (get result "parents"))
-                           (objects (get result "objects")))
-                      (do (method (object)
-                            (add-result browser object parents: parents))
-                          objects))))
+                    (do (method (object)
+                          (attach (make <object-component>
+                                        object: object)
+                                  (create-element "li"
+                                                  parent: results)))
+                        (as-environment-objects
+                         (decode-json (get event "data"))
+                         default-type: (get collection "type")))))
     (request browser)))
 
 (define-function show-view (type x y #rest rest)
@@ -647,19 +649,20 @@
     (attach view body)
     view))
 
-(define-function add-result ((browser <browser>) result #key parents)
-  (bind ((item (create-element "li" parent: (get browser "results")))
-         (result (if (instance? result <string>)
-                     (make-object "name" result)
-                     result)))
-    (when parents
-      (set! (get result "parents")
-            parents))
-    (unless (get result "type")
-      (set! (get result "type")
-            (get browser "collection" "type")))
-    (attach (make <object-component> object: (as-environment-object result))
-            item)))
+(define-function as-environment-objects (response #key default-type)
+  (bind ((parents (get response "parents")))
+    (map (method (result)
+           (bind ((result (if (instance? result <string>)
+                              (make-object "name" result)
+                              result)))
+            (when parents
+              (set! (get result "parents")
+                    parents))
+            (unless (get result "type")
+              (set! (get result "type")
+                    default-type))
+            (as-environment-object result)))
+         (get response "objects"))))
 
 (define-function request ((browser <browser>))
   (delete-children (get browser "results"))
