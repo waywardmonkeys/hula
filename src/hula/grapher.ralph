@@ -35,38 +35,41 @@
   (apply next-method node rest)
   (bind ((element (set! (get node "element")
                         (create-element "div" class: "node")))
-         (left (when left?
-                 (set! (get node "left")
-                       (create-element "button" class: "left"))))
          (object (set! (get node "object")
                        (make <object-component>
                              object: object
-                             simple?: #t)))
-         (right (when right?
-                  (set! (get node "right")
-                        (create-element "button" class: "right")))))
+                             simple?: #t))))
+    (do (method (binding)
+          (destructuring-bind (enabled? side) binding
+            (when enabled?
+              (bind ((button (create-element "button"
+                                             class: side)))
+                (set! (get node side) button)
+                (add-listener button "click"
+                              (method (event)
+                                (toggle-class button "open")
+                                (trigger-event node
+                                 (make-event side))))))))
+        [[left? "left"] [right? "right"]])
     (when left?
-      (append-child element left)
-      (add-listener left "click" (method (event)
-                                   (trigger-event node
-                                    (make-event "left")))))
+      (append-child element (get node "left")))
     (attach object element)
     (when right?
-      (append-child element right)
-      (add-listener right "click" (method (event)
-                                   (trigger-event node
-                                    (make-event "right")))))))
+      (append-child element (get node "right")))))
 
 ;; graph part
 
 (define-class <graphs> (<component>)
   object
-  collection)
+  collection
+  fetched?)
 
 (define-function initialize ((graphs <graphs>) #rest rest
-                             #key object collection left? right?)
+                             #key object graph left? right?)
   (apply next-method graphs rest)
-  (bind ((element (set! (get graphs "element")
+  (bind ((collection (set! (get graphs "collection")
+                           (get graph (if left? "left" "right"))))
+         (element (set! (get graphs "element")
                         (create-element "div" class: "graphs")))
          (request-component
           (set! (get graphs "request-component")
@@ -77,10 +80,12 @@
                (if left? "before" "after"))
     (add-listener graphs "data"
                   (method (event)
+                    (set! (get graphs "fetched?") #t)
                     (bind ((results (decode-json (get event "data"))))
                           (do (method (object)
                                 (attach (make <graph-component>
                                               object: object
+                                              graph: graph
                                               left?: left? right?: right?)
                                         element))
                               (as-environment-objects
@@ -106,31 +111,32 @@
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
                         (create-element "div" class: "graph")))
-         (before (when left?
-                   (set! (get component "before")
-                         (make <graphs>
-                               object: object
-                               collection: (get graph "left")
-                               left?: #t))))
          (node (set! (get component "node")
                      (make <graph-node> object: object
-                           left?: left? right?: right?)))
-         (after (when right?
-                  (set! (get component "after")
-                        (make <graphs>
-                              object: object
-                              collection: (get graph "right")
-                              right?: #t)))))
+                           left?: left? right?: right?))))
+    (do (method (binding)
+          (destructuring-bind
+              (enabled? part side left? right?) binding
+            (when enabled?
+              (bind ((graphs (make <graphs>
+                                   object: object
+                                   graph: graph
+                                   left?: left?
+                                   right?: right?)))
+                (set! (get component part) graphs)
+                (hide graphs)
+                (add-listener node side
+                              (method (event)
+                                (if (hidden? graphs)
+                                    (begin
+                                     (show graphs)
+                                     (unless (get graphs "fetched?")
+                                       (request graphs)))
+                                    (hide graphs))))))))
+        [[left? "before" "left" #t #f]
+         [right? "after" "right" #f #t]])
     (when left?
-      (attach before element)
-      (add-listener node "left"
-                    (method (event)
-                      (log "LEFT")
-                      (request before))))
+      (attach (get component "before") element))
     (attach node element)
     (when right?
-      (attach after element)
-      (add-listener node "right"
-                    (method (event)
-                      (log "RIGHT")
-                      (request after))))))
+      (attach (get component "after") element))))
