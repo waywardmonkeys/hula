@@ -77,12 +77,12 @@
 
 /* graph */
 
-.grapher .graph {
+.grapher .graph ~ .graph {
     padding: 5px 15px
 }
 
-.grapher .graph:first-of-type {
-    padding-top: 0
+.grapher .graph {
+    padding: 0 15px 5px 15px;
 }
 
 /* before */
@@ -103,7 +103,7 @@
     background-size: 15px 3px;
 }
 
-.grapher .before > .graph:first-of-type {
+.grapher .before > .graph:nth-child(2) {
     background: url(images/vertical.svg) no-repeat,
                 url(images/horizontal.svg) no-repeat;
     background-position: right 9px,
@@ -112,7 +112,7 @@
                      12px 3px;
 }
 
-.grapher .before > .graph {
+.grapher .before > .graph ~ .graph {
     background: url(images/horizontal.svg) no-repeat,
                 url(images/vertical.svg) repeat-y;
     background-position: right 12px, /* TODO: right 2px top 12px */
@@ -121,7 +121,7 @@
                      3px 100%;
 }
 
-.grapher .before > .graph:last-of-type {
+.grapher .before > .graph:last-child {
     background: url(images/L2.svg) no-repeat,
                 url(images/horizontal.svg) no-repeat,
                 url(images/vertical.svg) no-repeat;
@@ -133,7 +133,7 @@
 		     3px 12px;
 }
 
-.grapher .before > .graph:last-of-type:first-of-type {
+.grapher .before > .graph:nth-child(2):last-child {
     background: url(images/horizontal.svg) right 7px no-repeat;
     background-size: 10px 3px;
 }
@@ -163,21 +163,21 @@
     background-size: 15px 3px;
 }
 
-.grapher .after > .graph:first-of-type {
+.grapher .after > .graph:nth-child(2) {
     background: url(images/vertical.svg) left 9px no-repeat,
                 url(images/horizontal.svg) left 7px no-repeat;
     background-size: 3px 100%,
                      12px 3px;
 }
 
-.grapher .after > .graph {
+.grapher .after > .graph ~ .graph {
     background: url(images/horizontal.svg) 2px 12px no-repeat,
                 url(images/vertical.svg) left top repeat-y;
     background-size: 10px 3px,
                      3px 100%;
 }
 
-.grapher .after > .graph:last-of-type {
+.grapher .after > .graph:last-child {
     background: url(images/L.svg) no-repeat,
                 url(images/horizontal.svg) no-repeat,
                 url(images/vertical.svg) no-repeat;
@@ -189,7 +189,7 @@
 		     3px 12px;
 }
 
-.grapher .after > .graph:last-of-type:first-of-type {
+.grapher .after > .graph:nth-child(2):last-child {
     background: url(images/horizontal.svg) left 7px no-repeat;
     background-size: 10px 3px;
 }
