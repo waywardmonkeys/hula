@@ -13,7 +13,7 @@
 (define-function initialize ((component <request-component>) #rest rest)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
-                        (create-element "div" class: "remote")))
+                        (make-element "div" class: "remote")))
          (activity (set! (get component "activity")
                         (make <activity>)))
          (not-available (set! (get component "not-available")

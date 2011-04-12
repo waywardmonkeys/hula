@@ -79,9 +79,9 @@
              (append-child element
                            (create-text-node
                             (concatenate (get object "name") " ")))
-             (bind ((info (create-element "span"
-                                          class: "info"
-                                          parent: element)))
+             (bind ((info (make-element "span"
+                                        class: "info"
+                                        parent: element)))
                (append-child info
                              (create-text-node
                               (concatenate

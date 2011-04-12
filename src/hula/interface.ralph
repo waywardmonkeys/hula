@@ -26,22 +26,21 @@
 (define-function initialize ((view <view>) #rest rest #key label)
   (apply next-method view rest)
   (bind ((element (set! (get view "element")
-                        (create-element "div" class: "view")))
+                        (make-element "div" class: "view")))
          (header (set! (get view "header")
-                       (create-element "div"
-                                       class: "header"
-                                       parent: element)))
+                       (make-element "div"
+                                     class: "header"
+                                     parent: element)))
          (icon (set! (get view "icon")
-                     (create-element "div"
-                                     class: "icon"
-                                     parent: header)))
+                     (make-element "div"
+                                   class: "icon"
+                                   parent: header)))
          (label-element (set! (get view "label")
-                              (create-element "label"
-                                              parent: header)))
+                              (make-element "label" parent: header)))
          (content (set! (get view "content")
-                        (create-element "div"
-                                        class: "content"
-                                        parent: element)))
+                        (make-element "div"
+                                      class: "content"
+                                      parent: element)))
          (resizer (make <resizer>))
          (closer (make <closer>))
          (dragger (make <dragger> element: (get view "header"))))
@@ -71,13 +70,12 @@
   (apply next-method window rest)
   (bind ((element (get window "element"))
          (footer (set! (get window "footer")
-                       (create-element "div"
-                                       class: "footer"
-                                       parent: element)))
+                       (make-element "div"
+                                     class: "footer"
+                                     parent: element)))
          (footer-label
           (set! (get window "footer-label")
-                (create-element "label"
-                                parent: footer))))
+                (make-element "label" parent: footer))))
     (add-class element "window")))
 
 (define-function footer-label ((window <window>))
@@ -111,7 +109,7 @@
   (bind ((element (get note "element"))
          (content (get note "content"))
          (text-element (set! (get note "text")
-                             (create-element "textarea"))))
+                             (make-element "textarea"))))
     (add-class element "note")
     (append-child content text-element)
     (set! (note-text note) text)))
@@ -130,7 +128,7 @@
   (when element
     (set! (get dragger "element-provided?") #t))
   (bind ((element (set! (get dragger "element")
-                        (or element (create-element "div")))))
+                        (or element (make-element "div")))))
     (add-class element "dragger")))
 
 (define-function attach ((dragger <dragger>) (view <view>))
@@ -178,7 +176,7 @@
 
 (define-function initialize ((closer <closer>) #key element)
   (bind ((element (set! (get closer "element")
-                        (or element (create-element "button")))))
+                        (or element (make-element "button")))))
     (add-class element "close")))
 
 (define-function attach ((closer <closer>) (view <view>))
@@ -204,7 +202,7 @@
 
 (define-function initialize ((resizer <resizer>) #key element)
   (bind ((element (set! (get resizer "element")
-                        (or element (create-element "div")))))
+                        (or element (make-element "div")))))
     (add-class element "resizer")))
 
 (define-function attach ((resizer <resizer>) (view <view>))
@@ -338,11 +336,9 @@
 (define-function initialize ((component <search-field>) #rest rest)
   (apply next-method component rest)
   (bind ((section (set! (get component "element")
-                        (create-element "section"
-                                        class: "search")))
+                        (make-element "section" class: "search")))
          (input (set! (get component "input")
-                      (create-element "input"
-                                      parent: section))))
+                      (make-element "input" parent: section))))
     (set! (attribute input "type") "search")
     (set! (attribute input "results") 0)))
 
@@ -377,8 +373,7 @@
   (next-method window)
   (bind ((content (get window "content"))
          (results (set! (get window "results")
-                        (create-element "ul"
-                                        parent: content)))
+                        (make-element "ul" parent: content)))
          (search (set! (get window "search")
                        (make <search-field>))))
     (attach search window)
@@ -433,11 +428,10 @@
 
 (define-function initialize ((editor <editor>) #key source)
   (bind ((element (set! (get editor "element")
-                        (create-element "div" class: "editor")))
+                        (make-element "div" class: "editor")))
          (text (set! (get editor "text")
-                     (create-element "textarea"
-                                     parent: element))))
-    (if source
+                     (make-element "textarea" parent: element))))
+        (if source
       (set! (js:get-property text "innerHTML") source)
       (hide editor))
     (set! (get editor "editor")
@@ -498,7 +492,7 @@
 
 (define-function initialize ((component <context-menu>) #key entries)
    (bind ((element (set! (get component "element")
-                         (create-element "menu"))))
+                         (make-element "menu"))))
     (set! (attribute element "type") "context")))
 
 (define *context-menu* (make <context-menu>))
@@ -540,7 +534,7 @@
     ;; populate entries
     (delete-children element)
     (do (method (label)
-                (bind ((command (create-element "command" parent: element)))
+                (bind ((command (make-element "command" parent: element)))
                   (set! (attribute command "label") label)
                   (set! (js:get-property command "innerHTML") label)
                   (add-listener command "click" (get items label))))
@@ -562,7 +556,7 @@
   (apply next-method browser rest)
   (bind ((content (get browser "content"))
          (results (set! (get browser "results")
-                        (create-element "ul" parent: content)))
+                        (make-element "ul" parent: content)))
          (search (set! (get browser "search")
                        (make <search-field> instant?: #t)))
          (object-component (when object
@@ -588,8 +582,7 @@
                     (do (method (object)
                           (attach (make <object-component>
                                         object: object)
-                                  (create-element "li"
-                                                  parent: results)))
+                                  (make-element "li" parent: results)))
                         (as-environment-objects
                          (decode-json (get event "data"))
                          default-type: (get collection "type")))))
@@ -643,7 +636,7 @@
 
 (define-function initialize ((workspace <workspace>))
   (set! (get workspace "element")
-        (create-element "div" class: "workspace")))
+        (make-element "div" class: "workspace")))
 
 (define *workspace* (make <workspace>))
 
@@ -669,7 +662,7 @@
 
 (define-function initialize ((activity <activity>))
   (set! (get activity "element")
-        (create-element "div" class: "activity"))
+        (make-element "div" class: "activity"))
   (hide activity))
 
 ;; N/A
@@ -678,7 +671,7 @@
 
 (define-function initialize ((not-available <not-available>))
   (bind ((element (set! (get not-available "element")
-                        (create-element "div" class: "not-available"))))
+                        (make-element "div" class: "not-available"))))
     (set! (js:get-property element "innerHTML") "Not available")
     (hide not-available)))
 
@@ -691,7 +684,7 @@
                              #rest rest #key object simple?)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
-                        (create-element "div" class: "object")))
+                        (make-element "div" class: "object")))
          (request-component (set! (get component "request-component")
                                   (make <request-component> target: component)))
          (type (get object "type"))
@@ -763,7 +756,7 @@
                              #rest rest #key object)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
-                        (create-element "div" class: "qualified-object"))))
+                        (make-element "div" class: "qualified-object"))))
     (attach (make <object-component>
                   object: object)
             element)

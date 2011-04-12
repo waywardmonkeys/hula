@@ -14,7 +14,7 @@
                              #key object graph)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
-                        (create-element "div" class: "grapher")))
+                        (make-element "div" class: "grapher")))
          (graph (set! (get component "graph")
                       (make <graph-component>
                             object: object
@@ -34,7 +34,7 @@
                              #key object left? right?)
   (apply next-method node rest)
   (bind ((element (set! (get node "element")
-                        (create-element "div" class: "node")))
+                        (make-element "div" class: "node")))
          (object (set! (get node "object")
                        (make <object-component>
                              object: object
@@ -42,7 +42,7 @@
     (do (method (binding)
           (destructuring-bind (enabled? side) binding
             (when enabled?
-              (bind ((button (create-element "button"
+              (bind ((button (make-element "button"
                                              class: side)))
                 (set! (get node side) button)
                 (add-listener button "click"
@@ -70,7 +70,7 @@
   (bind ((collection (set! (get graphs "collection")
                            (get graph (if left? "left" "right"))))
          (element (set! (get graphs "element")
-                        (create-element "div" class: "graphs")))
+                        (make-element "div" class: "graphs")))
          (request-component
           (set! (get graphs "request-component")
                 (make <request-component> target: graphs))))
@@ -110,7 +110,7 @@
                              #key object graph left? right?)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
-                        (create-element "div" class: "graph")))
+                        (make-element "div" class: "graph")))
          (node (set! (get component "node")
                      (make <graph-node> object: object
                            left?: left? right?: right?))))
