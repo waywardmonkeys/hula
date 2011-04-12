@@ -22,6 +22,26 @@
     background: none;
 }
 
+/* activity */
+
+.graphs .activity {
+    background-image: url(images/activity.gif);
+    width: 16px;
+    height: 12px;
+}
+
+.before .remote {
+    margin-right: 5px;
+}
+
+.after .remote {
+    margin-left: 5px;
+}
+
+.graphs .not-available {
+    margin-top: 0
+}
+
 /* animation */
 
 .grapher .after.hidden,
@@ -29,6 +49,7 @@
     opacity: 0;
     height: 0;
     width: 0;
+    display: inline-block !important;
 }
 
 .grapher .after,
