@@ -15,6 +15,41 @@
       (keys replacements))
   template)
 
+;; state
+
+(define *views* [])
+
+(define-function save-state ()
+  (map (method (view)
+         (bind ((type (type view))
+                (slots (get type "%own-slots"))
+                (initializers (make-object)))
+           (do (method (slot)
+                 (set! (get initializers slot)
+                       (get view slot)))
+               slots)
+           (make-object "type" (get type "%name")
+                        "position" (view-position view)
+                        "size" (view-size view)
+                        "initializers" initializers)))
+       *views*))
+
+(define-function restore-state (state)
+  (do (method (description)
+        (bind ((type (get *module* (get description "type")))
+               (initializers (get description "initializers"))
+               (arguments []))
+          (do (method (key)
+                (push-last arguments (keyword key))
+                (push-last arguments (get initializers key)))
+              (keys initializers))
+          (bind ((view (apply show-view type
+                              (concatenate (get description "position")
+                                           arguments))))
+            (set! (view-size view)
+                  (get description "size")))))
+      state))
+
 ;; view
 
 (define-class <view> (<component>)
@@ -49,12 +84,30 @@
     (attach closer view)
     (attach dragger view)))
 
+(define-function view-position ((view <view>))
+  (bind ((element (get view "element")))
+    [(element-left element)
+     (element-top element)]))
+
 (define-function (setter view-position) ((view <view>) position)
   (bind ((element (get view "element")))
     (destructuring-bind (left top) position
       (set! (element-left element) left)
       (set! (element-top element) top)))
   (trigger-event view (make-event "move")))
+
+(define-function view-size ((view <view>))
+  (bind ((element (get view "element")))
+    [(element-width element)
+     (element-height element)]))
+
+(define-function (setter view-size) ((view <view>) size)
+  (bind ((element (get view "element")))
+    (destructuring-bind (width height) size
+      (set! (element-width element) width)
+      (set! (element-height element) height)))
+  (trigger-event view (make-event "resize")))
+
 
 (define-function header-label ((view <view>))
   (js:get-property view "label" "innerHTML"))
@@ -187,6 +240,7 @@
     (bind-methods ((finished (event)
                      (when closing?
                        (delete-element view-element)
+                       (remove! *views* view)
                        (trigger-event view (make-event "close"))))
                     (click (event)
                       (set! closing? #t)
@@ -590,6 +644,7 @@
 
 (define-function show-view (type x y #rest rest)
   (bind ((view (apply make type rest)))
+    (push-last *views* view)
     (set! (view-position view)
           [(- x 10) (- y 10)])
     (attach view body)
