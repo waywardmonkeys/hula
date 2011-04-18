@@ -837,13 +837,19 @@
                              #rest rest #key object)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
-                        (make-element "div" class: "qualified-object"))))
-    (attach (make <object-component>
-                  object: object)
-            element)
-    (do (method (object)
-          (attach (make <object-component>
-                        object: object
-                        simple?: #t)
-                  element))
-        (reverse (get object "parents")))))
+                        (make-element "div" class: "qualified-object")))
+	 (object-component (make <object-component>
+                                 object: object)))
+    (attach object-component element)
+    (bind-methods ((add-parents ()
+                     (do (method (object)
+			   (attach (make <object-component>
+					 object: object
+					 simple?: #t)
+				   element))
+			 (reverse (get object "parents")))))
+      (if (get object "incomplete?")
+	  (add-listener object-component "data"
+			(method (event)
+			  (add-parents)))
+	  (add-parents)))))
