@@ -38,18 +38,18 @@
                              name: name]))))
 
 (define-function add-object-list (element objects)
-  (append-child element (create-text-node " ("))
+  (append-child element (make-text-node " ("))
   (do (method (object)
         (attach (make <object-component>
                       object: object
                       simple?: #t)
                 element)
-        (append-child element (create-text-node ", ")))
+        (append-child element (make-text-node ", ")))
       objects)
   ;; remove superfluous last comma
   (unless (empty? objects)
     (delete-element (js:get-property element "lastChild")))
-  (append-child element (create-text-node ")")))
+  (append-child element (make-text-node ")")))
 
 (define-type "library" "Library"
   has-source?: #f
@@ -77,13 +77,13 @@
                       name: "Defintions")]
   display: (method (object element)
              (append-child element
-                           (create-text-node
+                           (make-text-node
                             (concatenate (get object "name") " ")))
              (bind ((info (make-element "span"
                                         class: "info"
                                         parent: element)))
                (append-child info
-                             (create-text-node
+                             (make-text-node
                               (concatenate
                                "(" (as-string
                                     (get object "details" "definitions"))
@@ -135,7 +135,7 @@
                  right: direct-subclasses)]
   display: (method (object element)
              (append-child element
-                           (create-text-node
+                           (make-text-node
                             (concatenate (get object "name") " ")))
              (add-object-list element
                               (get object "details" "direct-superclasses"))))
@@ -151,19 +151,19 @@
 (define-type "method" "method"
   display: (method (object element)
              (append-child element
-                           (create-text-node
+                           (make-text-node
                             (concatenate (get object "name") " ")))
              (add-object-list element
                               (get object "details" "specializers"))
              (append-child element
-                           (create-text-node " => "))
+                           (make-text-node " => "))
              (add-object-list element
                               (map (rcurry get "details" "type")
                                    (get object "details" "values")))))
 
 (define-function display-name/type (object element)
   (append-child element
-                (create-text-node
+                (make-text-node
                  (concatenate (get object "name") " :: ")))
   (attach (make <object-component>
                 object: (get object "details" "type")
