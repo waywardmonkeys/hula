@@ -114,6 +114,13 @@
 (define references
   [clients used-definitions])
 
+(define references-graph
+  (make <environment-graph>
+	name: "References graph"
+	left: clients
+	right: used-definitions))
+
+
 (define-type "class" "Class"
   collections: (concatenate
 		[(make <environment-collection>
@@ -147,7 +154,8 @@
   graphs: [(make <environment-graph>
                  name: "Class graph"
                  left: direct-superclasses
-                 right: direct-subclasses)]
+                 right: direct-subclasses)
+           references-graph]
   display: (method (object element)
              (append-child element
                            (make-text-node
@@ -171,7 +179,8 @@
 
 (define-type "function" "Function"
   display: display-function
-  collections: references)
+  collections: references
+  graphs: [references-graph])
 
 (define-type "generic-function" "Generic function"
   display: display-function
@@ -180,11 +189,13 @@
                        identifier: "methods"
                        name: "Methods"
                        type: "method")]
-                references))
+                references)
+  graphs: [references-graph])
 
 (define-type "method" "method"
   display: display-function
-  collections: references)
+  collections: references
+  graphs: [references-graph])
 
 (define-function display-name/type (object element)
   (append-child element
@@ -199,29 +210,36 @@
 
 (define-type "variable" "Variable"
   display: display-name/type
-  collections: references)
+  collections: references
+  graphs: [references-graph])
 
 (define-type "global-variable" "Global variable"
   display: display-name/type
-  collections: references)
+  collections: references
+  graphs: [references-graph])
 
 (define-type "thread-variable" "Thread variable"
   display: display-name/type
-  collections: references)
+  collections: references
+  graphs: [references-graph])
 
 (define-type "constant" "Constant"
   display: display-name/type
-  collections: references)
+  collections: references
+  graphs: [references-graph])
 
 (define-type "slot" "Slot"
   display: display-name/type
-  collections: references)
+  collections: references
+  graphs: [references-graph])
 
 (define-type "macro" "Macro"
-  collections: references)
+  collections: references
+  graphs: [references-graph])
 
 (define-type "domain" "Domain"
-  collections: references)
+  collections: references
+  graphs: [references-graph])
 
 (define-type "complex-type-expression" "Complex type expression"
   has-source?: #f)
