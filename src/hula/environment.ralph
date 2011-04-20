@@ -101,34 +101,49 @@
         name: "Direct subclasses"
         type: "class"))
 
+(define clients
+  (make <environment-collection>
+	identifier: "clients"
+	name: "Clients"))
+
+(define used-definitions
+  (make <environment-collection>
+        identifier: "used-definitions"
+        name: "Used definitions"))
+
+(define references
+  [clients used-definitions])
+
 (define-type "class" "Class"
-  collections: [(make <environment-collection>
-                      identifier: "direct-slots"
-                      name: "Direct slots"
-                      type: "slot")
-                (make <environment-collection>
-                      identifier: "all-slots"
-                      name: "All slots"
-                      type: "slot")
-                direct-superclasses
-                (make <environment-collection>
-                      identifier: "all-superclasses"
-                      name: "All superclasses"
-                      type: "class")
-                direct-subclasses
-                ;; TODO: not supported by backend yet
-                ;; (make <environment-collection>
-                ;;       identifier: "all-subclasses"
-                ;;       name: "All subclasses"
-                ;;       type: "class")
-                (make <environment-collection>
-                      identifier: "direct-methods"
-                      name: "Direct methods"
-                      type: "method")
-                (make <environment-collection>
-                      identifier: "all-methods"
-                      name: "All methods"
-                      type: "method")]
+  collections: (concatenate
+		[(make <environment-collection>
+		       identifier: "direct-slots"
+		       name: "Direct slots"
+		       type: "slot")
+                 (make <environment-collection>
+		       identifier: "all-slots"
+		       name: "All slots"
+		       type: "slot")
+		 direct-superclasses
+		 (make <environment-collection>
+		       identifier: "all-superclasses"
+		       name: "All superclasses"
+		       type: "class")
+		 direct-subclasses
+		 ;; TODO: not supported by backend yet
+		 ;; (make <environment-collection>
+		 ;;       identifier: "all-subclasses"
+		 ;;       name: "All subclasses"
+		 ;;       type: "class")
+		 (make <environment-collection>
+		       identifier: "direct-methods"
+		       name: "Direct methods"
+		       type: "method")
+		 (make <environment-collection>
+		       identifier: "all-methods"
+		       name: "All methods"
+		       type: "method")]
+		references)
   graphs: [(make <environment-graph>
                  name: "Class graph"
                  left: direct-superclasses
@@ -154,27 +169,9 @@
 		     (map get-type
 			  (get object "details" "values")))))
 
-(define clients
-  (make <environment-collection>
-	identifier: "clients"
-	name: "Clients"))
-
-(define clients
-  (make <environment-collection>
-	identifier: "clients"
-	name: "Clients"))
-
-(define used-definitions
-  (make <environment-collection>
-        identifier: "used-definitions"
-        name: "Used definitions"))
-
-(define function-collections
-  [clients used-definitions])
-
 (define-type "function" "Function"
   display: display-function
-  collections: function-collections)
+  collections: references)
 
 (define-type "generic-function" "Generic function"
   display: display-function
@@ -183,11 +180,11 @@
                        identifier: "methods"
                        name: "Methods"
                        type: "method")]
-                function-collections))
+                references))
 
 (define-type "method" "method"
   display: display-function
-  collections: function-collections)
+  collections: references)
 
 (define-function display-name/type (object element)
   (append-child element
@@ -201,23 +198,30 @@
 
 
 (define-type "variable" "Variable"
-  display: display-name/type)
+  display: display-name/type
+  collections: references)
 
 (define-type "global-variable" "Global variable"
-  display: display-name/type)
+  display: display-name/type
+  collections: references)
 
 (define-type "thread-variable" "Thread variable"
-  display: display-name/type)
+  display: display-name/type
+  collections: references)
 
 (define-type "constant" "Constant"
-  display: display-name/type)
+  display: display-name/type
+  collections: references)
 
 (define-type "slot" "Slot"
-  display: display-name/type)
+  display: display-name/type
+  collections: references)
 
-(define-type "macro" "Macro")
+(define-type "macro" "Macro"
+  collections: references)
 
-(define-type "domain" "Domain")
+(define-type "domain" "Domain"
+  collections: references)
 
 (define-type "complex-type-expression" "Complex type expression"
   has-source?: #f)
