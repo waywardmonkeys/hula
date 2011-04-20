@@ -154,18 +154,40 @@
 		     (map get-type
 			  (get object "details" "values")))))
 
+(define clients
+  (make <environment-collection>
+	identifier: "clients"
+	name: "Clients"))
+
+(define clients
+  (make <environment-collection>
+	identifier: "clients"
+	name: "Clients"))
+
+(define used-definitions
+  (make <environment-collection>
+        identifier: "used-definitions"
+        name: "Used definitions"))
+
+(define function-collections
+  [clients used-definitions])
+
 (define-type "function" "Function"
-  display: display-function)
+  display: display-function
+  collections: function-collections)
 
 (define-type "generic-function" "Generic function"
   display: display-function
-  collections: [(make <environment-collection>
-                      identifier: "methods"
-                      name: "Methods"
-                      type: "method")])
+  collections: (concatenate
+                [(make <environment-collection>
+                       identifier: "methods"
+                       name: "Methods"
+                       type: "method")]
+                function-collections))
 
 (define-type "method" "method"
-  display: display-function)
+  display: display-function
+  collections: function-collections)
 
 (define-function display-name/type (object element)
   (append-child element
