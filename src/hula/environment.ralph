@@ -140,26 +140,32 @@
              (add-object-list element
                               (get object "details" "direct-superclasses"))))
 
-(define-type "function" "Function")
+(define-function display-function (object element)
+  (bind ((get-type (rcurry get "details" "type")))
+    (append-child element
+                  (make-text-node
+                   (concatenate (get object "name") " ")))
+    (add-object-list element
+		     (map get-type
+			  (get object "details" "required")))
+    (append-child element
+		  (make-text-node " => "))
+    (add-object-list element
+		     (map get-type
+			  (get object "details" "values")))))
+
+(define-type "function" "Function"
+  display: display-function)
 
 (define-type "generic-function" "Generic function"
+  display: display-function
   collections: [(make <environment-collection>
                       identifier: "methods"
                       name: "Methods"
                       type: "method")])
 
 (define-type "method" "method"
-  display: (method (object element)
-             (append-child element
-                           (make-text-node
-                            (concatenate (get object "name") " ")))
-             (add-object-list element
-                              (get object "details" "specializers"))
-             (append-child element
-                           (make-text-node " => "))
-             (add-object-list element
-                              (map (rcurry get "details" "type")
-                                   (get object "details" "values")))))
+  display: display-function)
 
 (define-function display-name/type (object element)
   (append-child element
