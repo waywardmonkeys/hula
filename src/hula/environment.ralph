@@ -51,6 +51,12 @@
     (delete-element (js:get-property element "lastChild")))
   (append-child element (make-text-node ")")))
 
+(define-type "snippet" "Snippet"
+  display: (method (object element)
+             (append-child element
+                           (make-text-node "...")))
+  has-source?: #f)
+
 (define-type "library" "Library"
   has-source?: #f
   collections: [(make <environment-collection>
@@ -251,15 +257,24 @@
 (define-class <environment-object> ()
   type
   identifier
+  value
   name
   (parents [])
   details)
 
 (define-function dereference (object)
-  (bind ((objects (concatenate (map (rcurry get "identifier")
-                                    (get object "parents"))
-                               [(get object "identifier")])))
-    (concatenate "/" (join objects "/"))))
+  (bind-properties (identifier value) object
+    (bind ((objects (concatenate (map (rcurry get "identifier")
+                                      (get object "parents"))
+                                 (if identifier
+                                     [identifier]
+                                     []))))
+      (concatenate "/" (join objects "/")
+                   (if identifier
+                       ""
+                       (concatenate "?"
+                         (encode (make-object
+                                  "value" value))))))))
 
 (define-function convert-detail (object)
   (select object instance?

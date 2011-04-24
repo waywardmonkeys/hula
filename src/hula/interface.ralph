@@ -561,15 +561,20 @@
 (define-class <editor-window> (<remote-window>)
   object
   editor
-  (type "source"))
+  (type (make-object
+         "name" "Source"
+         "identifier" "source")))
 
 (define-function initialize ((window <editor-window>)
-                             #rest rest #key object)
+                             #rest rest #key object type)
   (apply next-method window rest)
-  (add-class (get window "element") "editor")
-  (set! (header-label window) "Source")
+  (add-class (get window "element")
+             "editor")
   (bind ((editor (set! (get window "editor")
-                       (make <editor>))))
+                       (make <editor>)))
+         (type (get window "type")))
+    (set! (header-label window)
+          (get type "name"))
     (add-listener (get editor "element") "contextmenu"
                   (curry show *context-menu* window))
     (append-child (get window "content")
@@ -577,14 +582,16 @@
     (add-listener window "data"
                   (method (event)
                     (show editor)
-                    (bind ((info (decode-json (get event "data"))))
+                    (bind ((info (decode-json (get event "data")))
+                           (identifier (get type "identifier")))
                       (set! (source editor)
-                            (get info "source"))
-                      (set! (footer-label window)
-                            (concatenate
-                             (get info "filename") " ("
-                             (get info "line") " &ndash; "
-                             (get info "end-line") ")")))))
+                            (get info identifier))
+                      (when (= identifier "source")
+                        (set! (footer-label window)
+                              (concatenate
+                               (get info "filename") " ("
+                               (get info "line") " &ndash; "
+                               (get info "end-line") ")"))))))
     (bind-methods ((walk-editor-nodes (node)
                      (do (method (child)
                            ;; TODO: support more types, parents always objects'?
@@ -624,12 +631,12 @@
          (show-view <editor-window>
            (js:get-property event "pageX")
            (js:get-property event "pageY")
-           type: "macroexpansion"
+           type: (make-object "name" "Macroexpansion"
+                              "identifier" "macroexpansion")
            object: (make <environment-object>
                          type: (get *types* "snippet")
-                         incomplete?: #t
                          parents: (get window "object" "parents")
-                         details: (make-object "value" selection))))))))
+                         value: selection)))))))
 
 (define-function request ((window <editor-window>))
   (hide (get window "editor"))
@@ -637,7 +644,8 @@
 
 (define-function request-url ((window <editor-window>))
   (bind-properties (object type) window
-    (concatenate "/api/" type (dereference object))))
+    (concatenate "/api/" (get type "identifier")
+                 (dereference object))))
 
 ;; browser
 
