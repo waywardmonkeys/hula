@@ -15,6 +15,67 @@
       (keys replacements))
   template)
 
+;; context menu
+
+(define-class <context-menu> (<component>)
+  x y)
+
+(define-function initialize ((component <context-menu>) #key entries)
+   (bind ((element (set! (get component "element")
+                         (make-element "menu"))))
+    (set! (attribute element "type") "context")))
+
+(define *context-menu* (make <context-menu>))
+
+(define-generic context-menu-items (object))
+
+(define-function attach ((menu <context-menu>) target)
+  (bind ((element (get menu "element"))
+         (target-element (if (instance? target <component>)
+                             (get target "element")
+                             target)))
+    ;; menu is only added once to document.body
+    (unless (parent element)
+      (append-child body element)
+      (add-listener document "click"
+                    (method (event)
+                      (unless (and (== (js:get-property event "pageX")
+                                       (get menu "x"))
+                                   (== (js:get-property event "pageY")
+                                       (get menu "y")))
+                        (hide menu)))))
+    (add-listener target-element "contextmenu"
+                  (curry show menu target))))
+
+(define-function show ((menu <context-menu>) target event)
+  (bind ((x (set! (get menu "x")
+                  (js:get-property event "pageX")))
+         (y (set! (get menu "y")
+                  (js:get-property event "pageY")))
+         (element (get menu "element"))
+         (items (or (context-menu-items target)
+                    (make-object))))
+  (unless (empty? (keys items))
+    ;; set position
+    (set! (element-left element)
+          (+ x 5))
+    (set! (element-top element)
+          (- y 10))
+    ;; populate entries
+    (delete-children element)
+    (do (method (label)
+                (bind ((command (make-element "command" parent: element)))
+                  (set! (attribute command "label") label)
+                  (set! (js:get-property command "innerHTML") label)
+                  (add-listener command "click" (get items label))))
+        (keys items))
+    ;; show menu
+    (next-method menu))
+  ;; prevent default menu
+  (prevent-default event)
+  (stop-propagation event)))
+
+
 ;; state
 
 (define *views* [])
@@ -556,66 +617,6 @@
 (define-function request-url ((window <editor-window>))
   (concatenate "/api/source"
                (dereference (get window "object"))))
-
-;; context menu
-
-(define-class <context-menu> (<component>)
-  x y)
-
-(define-function initialize ((component <context-menu>) #key entries)
-   (bind ((element (set! (get component "element")
-                         (make-element "menu"))))
-    (set! (attribute element "type") "context")))
-
-(define *context-menu* (make <context-menu>))
-
-(define-generic context-menu-items (object))
-
-(define-function attach ((menu <context-menu>) target)
-  (bind ((element (get menu "element"))
-         (target-element (if (instance? target <component>)
-                             (get target "element")
-                             target)))
-    ;; menu is only added once to document.body
-    (unless (parent element)
-      (append-child body element)
-      (add-listener document "click"
-                    (method (event)
-                      (unless (and (== (js:get-property event "pageX")
-                                       (get menu "x"))
-                                   (== (js:get-property event "pageY")
-                                       (get menu "y")))
-                        (hide menu)))))
-    (add-listener target-element "contextmenu"
-                  (curry show menu target))))
-
-(define-function show ((menu <context-menu>) target event)
-  (bind ((x (set! (get menu "x")
-                  (js:get-property event "pageX")))
-         (y (set! (get menu "y")
-                  (js:get-property event "pageY")))
-         (element (get menu "element"))
-         (items (or (context-menu-items target)
-                    (make-object))))
-  (unless (empty? (keys items))
-    ;; set position
-    (set! (element-left element)
-          (+ x 5))
-    (set! (element-top element)
-          (- y 10))
-    ;; populate entries
-    (delete-children element)
-    (do (method (label)
-                (bind ((command (make-element "command" parent: element)))
-                  (set! (attribute command "label") label)
-                  (set! (js:get-property command "innerHTML") label)
-                  (add-listener command "click" (get items label))))
-        (keys items))
-    ;; show menu
-    (next-method menu))
-  ;; prevent default menu
-  (prevent-default event)
-  (stop-propagation event)))
 
 ;; browser
 
