@@ -485,8 +485,8 @@
                         (make-element "div" class: "editor")))
          (text (set! (get editor "text")
                      (make-element "textarea" parent: element))))
-        (if source
-      (set! (js:get-property text "innerHTML") source)
+    (if source
+        (set! (js:get-property text "innerHTML") source)
       (hide editor))
     (set! (get editor "editor")
           ((js:get-property "CodeMirror" "fromTextArea")
@@ -522,7 +522,28 @@
                             (concatenate
                              (get info "filename") " ("
                              (get info "line") " &ndash; "
-                             (get info "end-line") ")"))))))
+                             (get info "end-line") ")")))))
+    (bind-methods ((walk-editor-nodes (node)
+                     (do (method (child)
+                           ;; TODO: support more types, parents always objects'?
+                           (if (has-class? child "dylan-symbolClass")
+                               (unless (has? child "component")
+                                 (bind ((name (js:get-property child "innerText"))
+					(object (as-environment-object
+						 (make-object "name" name
+							      "type" "class"
+							      "incomplete?" #t
+							      "parents" (get object "parents")))))
+				   (set! (get child "component")
+					 (make <object-component>
+					       element: child
+					       object: object))))
+                               (walk-editor-nodes child)))
+                         (children node))))
+      (add-listener (get editor "element") "DOMSubtreeModified"
+                    (method (event)
+                      (walk-editor-nodes
+                       (js:get-property event "target"))))))
   (when object
     (bind ((object-component
             (make <qualified-object-component>
@@ -530,6 +551,7 @@
       (attach object-component
               (get window "header")))
     (request window)))
+
 
 (define-function request ((window <editor-window>))
   (hide (get window "editor"))
@@ -736,10 +758,13 @@
   object)
 
 (define-function initialize ((component <object-component>)
-                             #rest rest #key object simple?)
+                             #rest rest #key element object simple?)
   (apply next-method component rest)
-  (bind ((element (set! (get component "element")
-                        (make-element "div" class: "object")))
+  (bind ((element-provided? element)
+	 (element (if element-provided?
+		      element
+		      (set! (get component "element")
+			    (make-element "div" class: "object"))))
          (request-component (set! (get component "request-component")
                                   (make <request-component> target: component)))
          (type (get object "type"))
@@ -749,11 +774,11 @@
           (get type "name"))
     (attach request-component component)
     (bind-methods ((display ()
-                     (if (and type-display
-                              (not simple?))
-                         (type-display object element)
-                         (set! (js:get-property element "innerText")
-                               (get object "name")))))
+		     (if (and type-display
+			      (not simple?))
+			 (type-display object element)
+		         (set! (js:get-property element "innerText")
+			       (get object "name")))))
       (add-listener component "data"
                     (method (event)
                       (extend object
@@ -761,10 +786,11 @@
                                (decode-json (get event "data"))))
                       (set! (get object "incomplete?") #f)
                       (display)))
-      (if (and (get object "incomplete?")
-               (not simple?))
-          (request request-component)
-          (display))))
+      (unless element-provided?
+	(if (and (get object "incomplete?")
+		 (not simple?))
+	    (request request-component)
+            (display)))))
   (attach *context-menu* component))
 
 (define-function request-url ((component <object-component>))
@@ -811,13 +837,19 @@
                              #rest rest #key object)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
-                        (make-element "div" class: "qualified-object"))))
-    (attach (make <object-component>
-                  object: object)
-            element)
-    (do (method (object)
-          (attach (make <object-component>
-                        object: object
-                        simple?: #t)
-                  element))
-        (reverse (get object "parents")))))
+                        (make-element "div" class: "qualified-object")))
+	 (object-component (make <object-component>
+                                 object: object)))
+    (attach object-component element)
+    (bind-methods ((add-parents ()
+                     (do (method (object)
+			   (attach (make <object-component>
+					 object: object
+					 simple?: #t)
+				   element))
+			 (reverse (get object "parents")))))
+      (if (get object "incomplete?")
+	  (add-listener object-component "data"
+			(method (event)
+			  (add-parents)))
+	  (add-parents)))))

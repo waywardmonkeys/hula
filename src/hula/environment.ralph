@@ -38,18 +38,18 @@
                              name: name]))))
 
 (define-function add-object-list (element objects)
-  (append-child element (create-text-node " ("))
+  (append-child element (make-text-node " ("))
   (do (method (object)
         (attach (make <object-component>
                       object: object
                       simple?: #t)
                 element)
-        (append-child element (create-text-node ", ")))
+        (append-child element (make-text-node ", ")))
       objects)
   ;; remove superfluous last comma
   (unless (empty? objects)
     (delete-element (js:get-property element "lastChild")))
-  (append-child element (create-text-node ")")))
+  (append-child element (make-text-node ")")))
 
 (define-type "library" "Library"
   has-source?: #f
@@ -77,13 +77,13 @@
                       name: "Defintions")]
   display: (method (object element)
              (append-child element
-                           (create-text-node
+                           (make-text-node
                             (concatenate (get object "name") " ")))
              (bind ((info (make-element "span"
                                         class: "info"
                                         parent: element)))
                (append-child info
-                             (create-text-node
+                             (make-text-node
                               (concatenate
                                "(" (as-string
                                     (get object "details" "definitions"))
@@ -101,69 +101,105 @@
         name: "Direct subclasses"
         type: "class"))
 
+(define clients
+  (make <environment-collection>
+	identifier: "clients"
+	name: "Clients"))
+
+(define used-definitions
+  (make <environment-collection>
+        identifier: "used-definitions"
+        name: "Used definitions"))
+
+(define references
+  [clients used-definitions])
+
+(define references-graph
+  (make <environment-graph>
+	name: "References graph"
+	left: clients
+	right: used-definitions))
+
+
 (define-type "class" "Class"
-  collections: [(make <environment-collection>
-                      identifier: "direct-slots"
-                      name: "Direct slots"
-                      type: "slot")
-                (make <environment-collection>
-                      identifier: "all-slots"
-                      name: "All slots"
-                      type: "slot")
-                direct-superclasses
-                (make <environment-collection>
-                      identifier: "all-superclasses"
-                      name: "All superclasses"
-                      type: "class")
-                direct-subclasses
-                ;; TODO: not supported by backend yet
-                ;; (make <environment-collection>
-                ;;       identifier: "all-subclasses"
-                ;;       name: "All subclasses"
-                ;;       type: "class")
-                (make <environment-collection>
-                      identifier: "direct-methods"
-                      name: "Direct methods"
-                      type: "method")
-                (make <environment-collection>
-                      identifier: "all-methods"
-                      name: "All methods"
-                      type: "method")]
+  collections: (concatenate
+		[(make <environment-collection>
+		       identifier: "direct-slots"
+		       name: "Direct slots"
+		       type: "slot")
+                 (make <environment-collection>
+		       identifier: "all-slots"
+		       name: "All slots"
+		       type: "slot")
+		 direct-superclasses
+		 (make <environment-collection>
+		       identifier: "all-superclasses"
+		       name: "All superclasses"
+		       type: "class")
+		 direct-subclasses
+		 ;; TODO: not supported by backend yet
+		 ;; (make <environment-collection>
+		 ;;       identifier: "all-subclasses"
+		 ;;       name: "All subclasses"
+		 ;;       type: "class")
+		 (make <environment-collection>
+		       identifier: "direct-methods"
+		       name: "Direct methods"
+		       type: "method")
+		 (make <environment-collection>
+		       identifier: "all-methods"
+		       name: "All methods"
+		       type: "method")]
+		references)
   graphs: [(make <environment-graph>
                  name: "Class graph"
                  left: direct-superclasses
-                 right: direct-subclasses)]
+                 right: direct-subclasses)
+           references-graph]
   display: (method (object element)
              (append-child element
-                           (create-text-node
+                           (make-text-node
                             (concatenate (get object "name") " ")))
              (add-object-list element
                               (get object "details" "direct-superclasses"))))
 
-(define-type "function" "Function")
+(define-function display-function (object element)
+  (bind ((get-type (rcurry get "details" "type")))
+    (append-child element
+                  (make-text-node
+                   (concatenate (get object "name") " ")))
+    (add-object-list element
+		     (map get-type
+			  (get object "details" "required")))
+    (append-child element
+		  (make-text-node " => "))
+    (add-object-list element
+		     (map get-type
+			  (get object "details" "values")))))
+
+(define-type "function" "Function"
+  display: display-function
+  collections: references
+  graphs: [references-graph])
 
 (define-type "generic-function" "Generic function"
-  collections: [(make <environment-collection>
-                      identifier: "methods"
-                      name: "Methods"
-                      type: "method")])
+  display: display-function
+  collections: (concatenate
+                [(make <environment-collection>
+                       identifier: "methods"
+                       name: "Methods"
+                       type: "method")]
+                references)
+  graphs: [references-graph])
 
 (define-type "method" "method"
-  display: (method (object element)
-             (append-child element
-                           (create-text-node
-                            (concatenate (get object "name") " ")))
-             (add-object-list element
-                              (get object "details" "specializers"))
-             (append-child element
-                           (create-text-node " => "))
-             (add-object-list element
-                              (map (rcurry get "details" "type")
-                                   (get object "details" "values")))))
+  display: display-function
+  collections: references
+  graphs: [references-graph])
 
 (define-function display-name/type (object element)
   (append-child element
-                (create-text-node
+                (make-text-node
                  (concatenate (get object "name") " :: ")))
   (attach (make <object-component>
                 object: (get object "details" "type")
@@ -173,23 +209,37 @@
 
 
 (define-type "variable" "Variable"
-  display: display-name/type)
+  display: display-name/type
+  collections: references
+  graphs: [references-graph])
 
 (define-type "global-variable" "Global variable"
-  display: display-name/type)
+  display: display-name/type
+  collections: references
+  graphs: [references-graph])
 
 (define-type "thread-variable" "Thread variable"
-  display: display-name/type)
+  display: display-name/type
+  collections: references
+  graphs: [references-graph])
 
 (define-type "constant" "Constant"
-  display: display-name/type)
+  display: display-name/type
+  collections: references
+  graphs: [references-graph])
 
 (define-type "slot" "Slot"
-  display: display-name/type)
+  display: display-name/type
+  collections: references
+  graphs: [references-graph])
 
-(define-type "macro" "Macro")
+(define-type "macro" "Macro"
+  collections: references
+  graphs: [references-graph])
 
-(define-type "domain" "Domain")
+(define-type "domain" "Domain"
+  collections: references
+  graphs: [references-graph])
 
 (define-type "complex-type-expression" "Complex type expression"
   has-source?: #f)
