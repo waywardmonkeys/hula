@@ -10,7 +10,8 @@
   not-available
   request)
 
-(define-function initialize ((component <request-component>) #rest rest)
+(define-function initialize ((component <request-component>) #rest rest
+                             #key target)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
                         (make-element "div" class: "remote")))
@@ -20,7 +21,11 @@
                               (make <not-available>))))
     (attach activity element)
     (attach not-available element)
-    (hide component)))
+    (hide component))
+  (add-listener (get target "element") "DOMNodeRemovedFromDocument"
+                (method (event)
+                  (if-bind (request (get component "request"))
+                    (cancel request)))))
 
 (define-generic request (object))
 
