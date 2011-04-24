@@ -85,24 +85,24 @@
     (attach dragger view)))
 
 (define-function view-position ((view <view>))
-  (bind ((element (get view "element")))
+  (bind-properties (element) view
     [(element-left element)
      (element-top element)]))
 
 (define-function (setter view-position) ((view <view>) position)
-  (bind ((element (get view "element")))
+  (bind-properties (element) view
     (destructuring-bind (left top) position
       (set! (element-left element) left)
       (set! (element-top element) top)))
   (trigger-event view (make-event "move")))
 
 (define-function view-size ((view <view>))
-  (bind ((element (get view "element")))
+  (bind-properties (element) view
     [(element-width element)
      (element-height element)]))
 
 (define-function (setter view-size) ((view <view>) size)
-  (bind ((element (get view "element")))
+  (bind-properties (element) view
     (destructuring-bind (width height) size
       (set! (element-width element) width)
       (set! (element-height element) height)))
@@ -159,13 +159,12 @@
 
 (define-function initialize ((note <note>) #key label text)
   (next-method note label: label)
-  (bind ((element (get note "element"))
-         (content (get note "content"))
-         (text-element (set! (get note "text")
-                             (make-element "textarea"))))
-    (add-class element "note")
-    (append-child content text-element)
-    (set! (note-text note) text)))
+  (bind-properties (element content) note
+    (bind ((text-element (set! (get note "text")
+                               (make-element "textarea"))))
+      (add-class element "note")
+      (append-child content text-element)
+      (set! (note-text note) text))))
 
 (define-function note-text ((note <note>))
   (js:get-property note "text" "innerHTML"))
@@ -397,24 +396,22 @@
     (set! (attribute input "results") 0)))
 
 (define-function attach ((component <search-field>) (view <view>))
-  (bind ((timeout #f)
-         (instant? (get component "instant?")))
-    (insert-before (get component "element")
-                   (get view "content"))
-    (add-listener (get component "input") "keyup"
-                  (method (event)
-                    (when timeout
-                      (clear-timeout timeout))
-                    (set! timeout
-                          (set-timeout
-                           (method ()
-                             (when (or (== (get event "keyCode") 13)
-                                       instant?)
-                               (bind ((query (get component "input" "value")))
+ (bind-properties (instant? element input) component
+    (insert-before element (get view "content"))
+    (bind ((timeout #f))
+      (add-listener input "keyup"
+                    (method (event)
+                      (when timeout
+                        (clear-timeout timeout))
+                      (set! timeout
+                            (set-timeout
+                             (method ()
+                               (when (or (== (get event "keyCode") 13)
+                                         instant?)
                                  (trigger-event component
                                                 (make-event "search"
-                                                            query: query)))))
-                           300))))))
+                                                            query: (get input "value")))))
+                             300)))))))
 
 (define-function focus ((component <search-field>))
   (focus-element (get component "input")))
@@ -425,16 +422,16 @@
 
 (define-function initialize ((window <search-window>))
   (next-method window)
-  (bind ((content (get window "content"))
-         (results (set! (get window "results")
-                        (make-element "ul" parent: content)))
-         (search (set! (get window "search")
-                       (make <search-field>))))
-    (attach search window)
-    (add-listener search "search"
-                  (method (event)
-                    (perform-search window (get event "query")))))
-  (add-class (get window "element") "search")
+  (bind-properties (element content) window
+    (bind ((results (set! (get window "results")
+                          (make-element "ul" parent: content)))
+           (search (set! (get window "search")
+                         (make <search-field>))))
+      (attach search window)
+      (add-listener search "search"
+                    (method (event)
+                      (perform-search window (get event "query")))))
+    (add-class element "search"))
   (set! (header-label window) "Search")
   (set! (footer-label window) "0 Results"))
 
@@ -462,19 +459,18 @@
 (define-function initialize ((window <grapher-window>)
                              #rest rest #key graph object)
   (apply next-method window rest)
-  (bind ((object-component (make <qualified-object-component>
-                                 object: object))
-         (grapher (set! (get window "grapher")
-                        (make <grapher>
-                              object: object
-                              graph: graph))))
-    (attach object-component
-            (get window "header"))
-    (attach grapher
-            (get window "content")))
-  (add-class (get window "element") "graph")
-  (set! (header-label window)
-        (get graph "name")))
+  (bind-properties (element header content) window
+    (bind ((object-component (make <qualified-object-component>
+                                   object: object))
+           (grapher (set! (get window "grapher")
+                          (make <grapher>
+                                object: object
+                                graph: graph))))
+      (attach object-component header)
+      (attach grapher content))
+    (add-class element "graph")
+    (set! (header-label window)
+          (get graph "name"))))
 
 ;; editor component
 
@@ -630,38 +626,34 @@
 (define-function initialize ((browser <browser>) #rest rest
                              #key collection object)
   (apply next-method browser rest)
-  (bind ((content (get browser "content"))
-         (results (set! (get browser "results")
-                        (make-element "ul" parent: content)))
-         (search (set! (get browser "search")
-                       (make <search-field> instant?: #t)))
-         (object-component (when object
-                             (make <qualified-object-component>
-                                   object: object))))
-    (when object
-      (attach object-component
-              (get browser "header")))
-    (attach search browser)
-    (add-class (get browser "element")
-               "browser")
-    (add-class (get browser "element")
-               (get collection "identifier"))
-    (set! (header-label browser)
-          (get collection "name"))
-    (add-listener search "search"
-                  (method (event)
-                    (set! (get browser "prefix")
-                          (get event "query"))
-                    (request browser)))
-    (add-listener browser "data"
-                  (method (event)
-                    (do (method (object)
-                          (attach (make <object-component>
-                                        object: object)
-                                  (make-element "li" parent: results)))
-                        (as-environment-objects
-                         (decode-json (get event "data"))
-                         default-type: (get collection "type")))))
+  (bind-properties (element header content) browser
+    (bind ((results (set! (get browser "results")
+                          (make-element "ul" parent: content)))
+           (search (set! (get browser "search")
+                         (make <search-field> instant?: #t))))
+      (when object
+        (attach (make <qualified-object-component>
+                      object: object)
+                header))
+      (attach search browser)
+      (add-class element "browser")
+      (add-class element (get collection "identifier"))
+      (set! (header-label browser)
+            (get collection "name"))
+      (add-listener search "search"
+                    (method (event)
+                      (set! (get browser "prefix")
+                            (get event "query"))
+                      (request browser)))
+      (add-listener browser "data"
+                    (method (event)
+                      (do (method (object)
+                            (attach (make <object-component>
+                                          object: object)
+                                    (make-element "li" parent: results)))
+                          (as-environment-objects
+                           (decode-json (get event "data"))
+                           default-type: (get collection "type"))))))
     (request browser)))
 
 (define-function show-view (type x y #rest rest)
@@ -697,9 +689,7 @@
                (if object (dereference object) "")))
 
 (define-function request-url ((browser <browser>))
-  (bind ((object (get browser "object"))
-         (collection (get browser "collection"))
-         (prefix (get browser "prefix")))
+  (bind-properties (object collection prefix) browser
     (concatenate (request-url collection object: object)
                  (if (and prefix
                           (not (empty? prefix)))
