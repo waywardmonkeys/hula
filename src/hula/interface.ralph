@@ -535,7 +535,8 @@
 
 ;; editor component
 
-(define-class <editor> (<component>))
+(define-class <editor> (<component>)
+  editor)
 
 (define-function initialize ((editor <editor>) #key source)
   (bind ((element (set! (get editor "element")
@@ -544,7 +545,7 @@
                      (make-element "textarea" parent: element))))
     (if source
         (set! (js:get-property text "innerHTML") source)
-      (hide editor))
+        (hide editor))
     (set! (get editor "editor")
           ((js:get-property "CodeMirror" "fromTextArea")
            text (make-object
@@ -567,6 +568,8 @@
   (set! (header-label window) "Source")
   (bind ((editor (set! (get window "editor")
                        (make <editor>))))
+    (add-listener (get editor "element") "contextmenu"
+                  (curry show *context-menu* window))
     (append-child (get window "content")
                   (get editor "element"))
     (add-listener window "data"
@@ -609,6 +612,22 @@
               (get window "header")))
     (request window)))
 
+(define-function context-menu-items ((window <editor-window>))
+  (bind ((editor (get window "editor" "editor"))
+         (selection ((js:get-property editor "getSelection"))))
+    (unless (empty? selection)
+      (make-object
+       "Macroexpansion"
+       (method (event)
+         (show-view <editor-window>
+           (js:get-property event "pageX")
+           (js:get-property event "pageY")
+           type: "macroexpansion"
+           object: (make <environment-object>
+                         type: (get *types* "snippet")
+                         incomplete?: #t
+                         parents: (get window "object" "parents")
+                         details: (make-object "value" selection))))))))
 
 (define-function request ((window <editor-window>))
   (hide (get window "editor"))
