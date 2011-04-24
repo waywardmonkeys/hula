@@ -103,8 +103,8 @@
 
 (define clients
   (make <environment-collection>
-	identifier: "clients"
-	name: "Clients"))
+        identifier: "clients"
+        name: "Clients"))
 
 (define used-definitions
   (make <environment-collection>
@@ -116,41 +116,41 @@
 
 (define references-graph
   (make <environment-graph>
-	name: "References graph"
-	left: clients
-	right: used-definitions))
+        name: "References graph"
+        left: clients
+        right: used-definitions))
 
 
 (define-type "class" "Class"
   collections: (concatenate
-		[(make <environment-collection>
-		       identifier: "direct-slots"
-		       name: "Direct slots"
-		       type: "slot")
+                [(make <environment-collection>
+                       identifier: "direct-slots"
+                       name: "Direct slots"
+                       type: "slot")
                  (make <environment-collection>
-		       identifier: "all-slots"
-		       name: "All slots"
-		       type: "slot")
-		 direct-superclasses
-		 (make <environment-collection>
-		       identifier: "all-superclasses"
-		       name: "All superclasses"
-		       type: "class")
-		 direct-subclasses
-		 ;; TODO: not supported by backend yet
-		 ;; (make <environment-collection>
-		 ;;       identifier: "all-subclasses"
-		 ;;       name: "All subclasses"
-		 ;;       type: "class")
-		 (make <environment-collection>
-		       identifier: "direct-methods"
-		       name: "Direct methods"
-		       type: "method")
-		 (make <environment-collection>
-		       identifier: "all-methods"
-		       name: "All methods"
-		       type: "method")]
-		references)
+                       identifier: "all-slots"
+                       name: "All slots"
+                       type: "slot")
+                 direct-superclasses
+                 (make <environment-collection>
+                       identifier: "all-superclasses"
+                       name: "All superclasses"
+                       type: "class")
+                 direct-subclasses
+                 ;; TODO: not supported by backend yet
+                 ;; (make <environment-collection>
+                 ;;       identifier: "all-subclasses"
+                 ;;       name: "All subclasses"
+                 ;;       type: "class")
+                 (make <environment-collection>
+                       identifier: "direct-methods"
+                       name: "Direct methods"
+                       type: "method")
+                 (make <environment-collection>
+                       identifier: "all-methods"
+                       name: "All methods"
+                       type: "method")]
+                references)
   graphs: [(make <environment-graph>
                  name: "Class graph"
                  left: direct-superclasses
@@ -169,13 +169,13 @@
                   (make-text-node
                    (concatenate (get object "name") " ")))
     (add-object-list element
-		     (map get-type
-			  (get object "details" "required")))
+                     (map get-type
+                          (get object "details" "required")))
     (append-child element
-		  (make-text-node " => "))
+                  (make-text-node " => "))
     (add-object-list element
-		     (map get-type
-			  (get object "details" "values")))))
+                     (map get-type
+                          (get object "details" "values")))))
 
 (define-type "function" "Function"
   display: display-function
