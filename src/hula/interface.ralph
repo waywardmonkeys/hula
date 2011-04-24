@@ -555,11 +555,13 @@
 (define-function (setter source) ((editor <editor>) source)
   ((js:get-property editor "editor" "setValue") source))
 
+
 ;; editor window
 
 (define-class <editor-window> (<remote-window>)
   object
-  editor)
+  editor
+  (type "source"))
 
 (define-function initialize ((window <editor-window>)
                              #rest rest #key object)
@@ -634,8 +636,8 @@
   (next-method window))
 
 (define-function request-url ((window <editor-window>))
-  (concatenate "/api/source"
-               (dereference (get window "object"))))
+  (bind-properties (object type) window
+    (concatenate "/api/" type (dereference object))))
 
 ;; browser
 
