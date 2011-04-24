@@ -793,9 +793,9 @@
                                (get object "name")))))
       (add-listener component "data"
                     (method (event)
-                      (extend object
-                              (as-environment-object
-                               (decode-json (get event "data"))))
+                      (extend! object
+                               (as-environment-object
+                                (decode-json (get event "data"))))
                       (set! (get object "incomplete?") #f)
                       (display)))
       (unless element-provided?
