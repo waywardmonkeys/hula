@@ -32,10 +32,7 @@
 (define-generic request-url (object))
 
 (define-function request ((component <request-component>))
-  (bind ((element (get component "element"))
-         (activity (get component "activity"))
-         (not-available (get component "not-available"))
-         (target (get component "target")))
+  (bind-properties (element activity not-available target) component
     (show activity)
     (hide not-available)
     (show component)
