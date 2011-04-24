@@ -28,6 +28,7 @@
 (define-class <graph-node> (<component>)
   left
   object
+  object-component
   right)
 
 (define-function initialize ((node <graph-node>) #rest rest
@@ -35,10 +36,10 @@
   (apply next-method node rest)
   (bind ((element (set! (get node "element")
                         (make-element "div" class: "node")))
-         (object (set! (get node "object")
-                       (make <object-component>
-                             object: object
-                             simple?: #t))))
+         (object-component (set! (get node "object-component")
+                                 (make <object-component>
+                                       object: object
+                                       simple?: #t))))
     (do (method (binding)
           (destructuring-bind (enabled? side) binding
             (when enabled?
@@ -53,22 +54,23 @@
         [[left? "left"] [right? "right"]])
     (when left?
       (append-child element (get node "left")))
-    (attach object element)
+    (attach object-component element)
     (when right?
       (append-child element (get node "right")))))
 
 ;; graph part
 
 (define-class <graphs> (<component>)
-  object
+  node
   collection
   fetched?)
 
 (define-function initialize ((graphs <graphs>) #rest rest
-                             #key object graph left? right?)
+                             #key node graph left? right?)
   (apply next-method graphs rest)
-  (bind ((collection (set! (get graphs "collection")
-                           (get graph (if left? "left" "right"))))
+  (bind ((side (if left? "left" "right"))
+         (collection (set! (get graphs "collection")
+                           (get graph side)))
          (element (set! (get graphs "element")
                         (make-element "div" class: "graphs")))
          (request-component
@@ -81,23 +83,28 @@
     (add-listener graphs "data"
                   (method (event)
                     (set! (get graphs "fetched?") #t)
-                    (bind ((results (decode-json (get event "data"))))
+                    (bind ((result (decode-json (get event "data"))))
+                      (if (empty? (get result "objects"))
+                          ;; no objects, hide subgraphs and button
+                          (begin
+                           (delete-element element)
+                           (delete-element (get node side)))
+                          ;; add graph-component for each object
                           (do (method (object)
                                 (attach (make <graph-component>
                                               object: object
                                               graph: graph
                                               left?: left? right?: right?)
                                         element))
-                              (as-environment-objects
-                               (decode-json (get event "data"))
-                               default-type: (get collection "type"))))))))
+                              (as-environment-objects result
+                               default-type: (get collection "type")))))))))
 
 (define-function request ((graphs <graphs>))
   (request (get graphs "request-component")))
 
 (define-function request-url ((graphs <graphs>))
   (request-url (get graphs "collection")
-               object: (get graphs "object")))
+               object: (get graphs "node" "object")))
 
 ;; graph
 
@@ -119,7 +126,7 @@
               (enabled? part side left? right?) binding
             (when enabled?
               (bind ((graphs (make <graphs>
-                                   object: object
+                                   node: node
                                    graph: graph
                                    left?: left?
                                    right?: right?)))
