@@ -32,6 +32,10 @@ path {
     pointer-events: none !important;
 }
 
+.top-level {
+    z-index: 100;
+}
+
 li:nth-child(2n+1) {
     background-color: #eee;
 }

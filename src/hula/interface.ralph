@@ -75,10 +75,22 @@
   (prevent-default event)
   (stop-propagation event)))
 
+;; top-level view
+
+(define *top-level*)
+
+(define-function set-top-level (view)
+  (when *top-level*
+    (remove-class (get *top-level* "element")
+                  "top-level"))
+  (set! *top-level* view)
+  (add-class (get *top-level* "element")
+             "top-level"))
 
 ;; state
 
 (define *views* [])
+
 
 (define-function save-state ()
   (map (method (view)
@@ -271,6 +283,7 @@
                      (stop-propagation event)
                      (prevent-default event))
                    (down (event)
+                     (set-top-level view)
                      (add-listener document "mouseup" up #t)
                      (add-listener document "mousemove" move #t)
                      (set! start-x (js:get-property event "pageX"))
@@ -692,6 +705,7 @@
     (set! (view-position view)
           [(- x 10) (- y 10)])
     (attach view body)
+    (set-top-level view)
     view))
 
 (define-function as-environment-objects (response #key default-type)
