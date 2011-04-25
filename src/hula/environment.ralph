@@ -58,7 +58,6 @@
   has-source?: #f)
 
 (define-type "library" "Library"
-  has-source?: #f
   collections: [(make <environment-collection>
                       identifier: "modules"
                       name: "Modules"
@@ -73,7 +72,6 @@
                       type: "library")])
 
 (define-type "module" "Module"
-  has-source?: #f
   collections: [(make <environment-collection>
                       identifier: "used-modules"
                       name: "Used modules"
