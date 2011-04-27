@@ -267,7 +267,7 @@
                                  (if identifier
                                      [identifier]
                                      []))))
-      (concatenate "/" (join objects "/")
+      (concatenate "/" (join (map encode-component objects) "/")
                    (if identifier
                        ""
                        (concatenate "?"
