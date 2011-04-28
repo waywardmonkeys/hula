@@ -576,6 +576,39 @@
     (set! (header-label window)
           (get graph "name"))))
 
+;; save component
+
+(define-class <save-field> (<component>)
+  button)
+
+(define-function initialize ((component <save-field>) #rest rest)
+  (apply next-method component rest)
+  (bind ((element (set! (get component "element")
+                        (make-element "section" class: "save")))
+         (button (set! (get component "button")
+                       (make-element "button"
+                                     parent: element
+                                     class: "save"))))
+    (add-listener component "error"
+                  (method (event)
+                    (set! (js:get-property element "innerHTML")
+                          "Save failed")))
+    (set! (js:get-property button "innerHTML")
+          "Save")))
+
+(define-function attach ((component <save-field>) (view <view>))
+ (bind-properties (element button) component
+    (insert-before element (get view "content"))
+    (add-listener button "click"
+                  (method (event)
+                    (trigger-event view (make-event "save"))))))
+
+(define-function enable ((component <save-field>))
+  (set! (attribute (get component "button") "disabled") #f))
+
+(define-function disable ((component <save-field>))
+  (set! (attribute (get component "button") "disabled") "disabled"))
+
 ;; editor component
 
 (define-class <editor> (<component>)
@@ -604,6 +637,7 @@
 (define-class <editor-window> (<remote-window>)
   object
   editor
+  save
   (type (make-object
          "name" "Source"
          "identifier" "source")))
@@ -615,11 +649,15 @@
              "editor")
   (bind ((editor (set! (get window "editor")
                        (make <editor>)))
+         (save (set! (get window "save")
+                     (make <save-field>)))
          (type (get window "type")))
     (set! (header-label window)
           (get type "name"))
     (add-listener (get editor "element") "contextmenu"
                   (curry show *context-menu* window))
+    (attach save window)
+    (hide save)
     (append-child (get window "content")
                   (get editor "element"))
     (add-listener window "data"
@@ -629,12 +667,32 @@
                            (identifier (get type "identifier")))
                       (set! (source editor)
                             (get info identifier))
+                      ((js:get-property editor "editor" "setOption") "onChange"
+                       (method ()
+                         (show save)))
                       (when (= identifier "source")
                         (set! (footer-label window)
                               (concatenate
                                (get info "filename") " ("
                                (get info "line") " &ndash; "
                                (get info "end-line") ")"))))))
+    (add-listener window "save"
+                  (method ()
+                    (disable save)
+                    (bind ((request (make <request>
+                                          url: (request-url window)
+                                          method: "POST"
+                                          content-type: "application/x-www-form-urlencoded")))
+                      (add-listener request "data"
+                                    (method (event)
+                                      (enable save)
+                                      (hide save)))
+                      (add-listener request "error"
+                                    (method (event)
+                                      (trigger-event save (make-event "error"))))
+                      (send request
+                            (encode (make-object
+                                     "value" ((js:get-property editor "editor" "getValue"))))))))
     (bind-methods ((walk-editor-nodes (node)
                      (do (method (child)
                            ;; TODO: support more types, parents always objects'?
