@@ -196,8 +196,28 @@
                 references)
   graphs: [references-graph])
 
-(define-type "method" "method"
-  display: display-function
+(define-type "method" "Method"
+  display: (method (object element)
+             (append-child element
+                           (make-text-node
+                            (concatenate (get object "name") " ")))
+             (add-object-list element
+                              (get object "details" "specializers"))
+             (append-child element
+                           (make-text-node " => "))
+             (add-object-list element
+                              (map (rcurry get "details" "type")
+                                   (get object "details" "values"))))
+  collections: references
+  graphs: [references-graph])
+
+(define-type "domain" "Domain"
+  display: (method (object element)
+             (append-child element
+                           (make-text-node
+                            (concatenate (get object "name") " ")))
+             (add-object-list element
+                              (get object "details" "specializers")))
   collections: references
   graphs: [references-graph])
 
@@ -238,10 +258,6 @@
   graphs: [references-graph])
 
 (define-type "macro" "Macro"
-  collections: references
-  graphs: [references-graph])
-
-(define-type "domain" "Domain"
   collections: references
   graphs: [references-graph])
 
