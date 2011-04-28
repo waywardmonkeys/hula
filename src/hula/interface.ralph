@@ -1,7 +1,7 @@
 (define-module interface
   import: (runtime/core runtime/regexp runtime/watch
-           toolbox/dom toolbox/interface
-           hula/request hula/search hula/environment hula/grapher)
+           toolbox/dom toolbox/serialization toolbox/interface
+           hula/request hula/environment hula/grapher)
   export: (<window> <resizer>
            *context-menu* *workspace*))
 
@@ -492,8 +492,10 @@
 
 ;; search
 
-(define-class <search-window> (<window>))
+(define-class <search-window> (<remote-window>)
+  query)
 
+;; TODO: state
 (define-function initialize ((window <search-window>))
   (next-method window)
   (bind-properties (element content) window
@@ -504,7 +506,27 @@
       (attach search window)
       (add-listener search "search"
                     (method (event)
-                      (perform-search window (get event "query")))))
+                      (log event)
+                      (set! (get window "query")
+                            (get event "query"))
+                      (animate element
+                               (method ()
+                                 ;; TODO: calculate sensible height
+                                 (set! (element-height element) 200)))
+                      (request window)))
+      (add-listener window "data"
+                    (method (event)
+                      (bind ((objects (as-environment-objects
+                                       (decode-json (get event "data")))))
+                        (do (method (object)
+                              (attach (make <object-component>
+                                            object: object)
+                                      (make-element "li" parent: results)))
+                            objects)
+                        (set! (footer-label window)
+                              (concatenate
+                               (as-string (size objects))
+                               " Results"))))))
     (add-class element "search"))
   (set! (header-label window) "Search")
   (set! (footer-label window) "0 Results"))
@@ -513,17 +535,26 @@
   (next-method window element)
   (focus (get window "search")))
 
-(define-function perform-search ((window <search-window>) query)
-  (search query
-          (method (results)
-            (bind ((element (get window "element")))
-              (animate element (method ()
-                                 ;; TODO: calculate sensible height
-                                 (set! (element-height element) 300)))
-              ;; TODO:
-              ;; - save results in window
-              ;; - add each result as component
-              (log "results:" results)))))
+;; (define-function perform-search ((window <search-window>) query)
+;;   (search query
+;;           (method (results)
+;;             (bind ((element (get window "element")))
+;;               (animate element (method ()
+;;                                  ;; TODO: calculate sensible height
+;;                                  (set! (element-height element) 300)))
+;;               ;; TODO:
+;;               ;; - save results in window
+;;               ;; - add each result as component
+;;               (log "results:" results)))))
+
+
+(define-function request ((window <search-window>))
+  (delete-children (get window "results"))
+  (next-method window))
+
+(define-function request-url ((window <search-window>))
+  (concatenate "/api/search/"
+               (encode-component (get window "query"))))
 
 ;; graph window
 
