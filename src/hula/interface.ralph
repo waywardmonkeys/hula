@@ -157,6 +157,7 @@
     (attach closer view)
     (attach dragger view)))
 
+
 (define-function view-position ((view <view>))
   (bind-properties (element) view
     [(element-left element)
@@ -168,6 +169,7 @@
       (set! (element-left element) left)
       (set! (element-top element) top)))
   (trigger-event view (make-event "move")))
+
 
 (define-function view-size ((view <view>))
   (bind-properties (element) view
@@ -187,6 +189,16 @@
 
 (define-function (setter header-label) ((view <view>) label)
   (set! (js:get-property view "label" "innerHTML") label))
+
+
+(define-function show-view (type x y #rest rest)
+  (bind ((view (apply make type rest)))
+    (push-last *views* view)
+    (set! (view-position view)
+          [(- x 10) (- y 10)])
+    (attach view body)
+    (set-top-level view)
+    view))
 
 ;; window
 
@@ -455,10 +467,11 @@
   (set! (attribute path "d")
         (concatenate "M" (join (map (rcurry join ",") points*) "L"))))
 
-;;
+;; search field
 
 (define-class <search-field> (<component>)
-  instant?)
+  instant?
+  input)
 
 (define-function initialize ((component <search-field>) #rest rest)
   (apply next-method component rest)
@@ -490,7 +503,7 @@
 (define-function focus ((component <search-field>))
   (focus-element (get component "input")))
 
-;; search
+;; search window
 
 (define-class <search-window> (<remote-window>)
   query)
@@ -506,7 +519,6 @@
       (attach search window)
       (add-listener search "search"
                     (method (event)
-                      (log event)
                       (set! (get window "query")
                             (get event "query"))
                       (animate element
@@ -717,30 +729,6 @@
                            default-type: (get collection "type"))))))
     (request browser)))
 
-(define-function show-view (type x y #rest rest)
-  (bind ((view (apply make type rest)))
-    (push-last *views* view)
-    (set! (view-position view)
-          [(- x 10) (- y 10)])
-    (attach view body)
-    (set-top-level view)
-    view))
-
-(define-function as-environment-objects (response #key default-type)
-  (bind ((parents (get response "parents")))
-    (map (method (result)
-           (bind ((result (if (instance? result <string>)
-                              (make-object "name" result)
-                              result)))
-            (when parents
-              (set! (get result "parents")
-                    parents))
-            (unless (get result "type")
-              (set! (get result "type")
-                    default-type))
-            (as-environment-object result)))
-         (get response "objects"))))
-
 (define-function request ((browser <browser>))
   (delete-children (get browser "results"))
   (next-method browser))
@@ -758,6 +746,74 @@
                      (concatenate "?" (encode (make-object
                                                "prefix" prefix)))
                      ""))))
+
+;; progress component
+
+(define-class <progress-field> (<component>)
+  progress)
+
+(define-function initialize ((component <progress-field>) #rest rest)
+  (apply next-method component rest)
+  (bind ((section (set! (get component "element")
+                        (make-element "section" class: "progress")))
+         (progress (set! (get component "progress")
+                         (make-element "progress" parent: section))))
+    (set! (attribute progress "min") 0)
+    (set! (attribute progress "max") 100)))
+
+(define-function attach ((component <progress-field>) (view <view>))
+ (bind-properties (element) component
+    (insert-before element (get view "content"))))
+
+(define-function (setter progress-value) ((component <progress-field>) value)
+  (set! (attribute (get component "progress") "value") value))
+
+;; build window
+
+(define-class <build-window> (<remote-window>)
+  object
+  interval)
+
+(define-function initialize ((window <build-window>) #rest rest
+                             #key object)
+  (apply next-method window rest)
+  (set! (header-label window) "Build")
+  (bind-properties (element header content interval) window
+    (add-class element "build")
+    (attach (make <qualified-object-component>
+                  object: object)
+            header)
+    (bind ((progress (set! (get window "progress")
+                           (make <progress-field>))))
+      (attach progress window)
+      (add-listener window "data"
+                    (method (event)
+                      (clear-interval (get window "interval"))
+                      (set! (progress-value progress) 100)))
+      (add-listener window "error"
+                    (method (event)
+                      (clear-interval (get window "interval"))))))
+  (request window)
+  (set! (get window "interval")
+        (set-interval (curry request-progress window)
+                      500)))
+
+(define-function request-url ((window <build-window>))
+  (concatenate "/api/build"
+               (dereference (get window "object"))))
+
+(define-function request-progress ((window <build-window>))
+  (bind-properties (progress interval) window
+    (bind ((request (make <request> url: "/api/build-progress")))
+      (add-listener request "data"
+                    (method (event)
+                        (bind ((response (decode-json (get event "data"))))
+                          (set! (progress-value progress)
+                                (* (get response "progress") 100)))))
+      (add-listener request "error"
+                    (method (event)
+                      (clear-interval interval)))
+      (send request))))
 
 ;; workspace
 
@@ -857,6 +913,13 @@
       (set! (get items "Source")
             (method (event)
               (show-view <editor-window>
+               (js:get-property event "pageX")
+               (js:get-property event "pageY")
+               object: (get component "object")))))
+    (when (get type "buildable?")
+      (set! (get items "Build")
+            (method (event)
+              (show-view <build-window>
                (js:get-property event "pageX")
                (js:get-property event "pageY")
                object: (get component "object")))))

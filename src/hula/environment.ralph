@@ -10,6 +10,7 @@
   (collections [])
   (graphs [])
   (has-source? #t)
+  (buildable? #f)
   display)
 
 (define-class <environment-collection> ()
@@ -58,6 +59,7 @@
   has-source?: #f)
 
 (define-type "library" "Library"
+  buildable?: #t
   collections: [(make <environment-collection>
                       identifier: "modules"
                       name: "Modules"
@@ -320,3 +322,18 @@
                   (convert-detail (get details detail))))
           (keys details)))
     object))
+
+(define-function as-environment-objects (response #key default-type)
+  (bind ((parents (get response "parents")))
+    (map (method (result)
+           (bind ((result (if (instance? result <string>)
+                              (make-object "name" result)
+                              result)))
+            (when parents
+              (set! (get result "parents")
+                    parents))
+            (unless (get result "type")
+              (set! (get result "type")
+                    default-type))
+            (as-environment-object result)))
+         (get response "objects"))))

@@ -423,9 +423,9 @@ menu command:hover {
     color: #555
 }
 
-/* search field */
+/* section */
 
-section.search {
+section {
     padding: 5px;
     background: -webkit-gradient(linear, 0% 0%, 0% 100%,
 				 from(#E5E5E5),
@@ -434,7 +434,8 @@ section.search {
     border-bottom: 1px solid #a5a5a5;
 }
 
-section.search input {
+section.search input,
+section.progress progress {
     width: 100%
 }
 
