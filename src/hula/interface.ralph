@@ -535,19 +535,6 @@
   (next-method window element)
   (focus (get window "search")))
 
-;; (define-function perform-search ((window <search-window>) query)
-;;   (search query
-;;           (method (results)
-;;             (bind ((element (get window "element")))
-;;               (animate element (method ()
-;;                                  ;; TODO: calculate sensible height
-;;                                  (set! (element-height element) 300)))
-;;               ;; TODO:
-;;               ;; - save results in window
-;;               ;; - add each result as component
-;;               (log "results:" results)))))
-
-
 (define-function request ((window <search-window>))
   (delete-children (get window "results"))
   (next-method window))
