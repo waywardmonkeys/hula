@@ -529,6 +529,12 @@ section.search input {
     color: white;
 }
 
+.object.domain:before {
+    content: 'd';
+    background: #8b7355;
+    color: white;
+}
+
 .object.function:before {
     content: 'f';
     background: #7CA5E7;
@@ -537,15 +543,35 @@ section.search input {
 
 .object.constant:before {
     content: 'c';
-    background: #555753;
+    background: #888;
 }
 
 .object.variable:before {
     content: 'v';
-    background: #d3d7cf
+    background: #888
+}
+
+.object.global-variable:before {
+    content: 'G';
+    background: #888
+}
+
+.object.thread-variable:before {
+    content: 't';
+    background: #888
 }
 
 .object.slot:before {
     content: 's';
     background: #ad7fa8
 }
+
+.object.macro:before {
+    content: '{}';
+    background: #555
+}
+.object.other:before {
+    content: '...';
+    background: #111
+}
+
