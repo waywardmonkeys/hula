@@ -268,6 +268,47 @@
 
 (define-type "parameter" "Parameter")
 
+(define-function display-warning (object element)
+  (bind-properties (short-description long-description)
+      (get object "details")
+    (bind ((short? #f)
+           (description (make-element "pre"
+                                      parent: element))
+           (button (unless (= short-description
+                              long-description)
+                     (make-element "button"
+                                   parent: element
+                                   class: "small"))))
+      (bind-methods ((toggle ()
+                       (delete-children description)
+                       (append-child description
+                         (make-text-node
+                          (if short?
+                              long-description
+                              short-description)))
+                       (when button
+                         (set! (js:get-property button "innerHTML")
+                               (if short?
+                                   "less"
+                                 "more")))
+                       (set! short? (not short?))))
+        (add-listener button "click" toggle)
+        (toggle)))))
+  ;; TODO: show object, if provided
+  ;; (attach (make <object-component>
+  ;;               object: (get object "details" "object")
+  ;;               simple?: #t)
+  ;;         element))
+
+(define-type "warning" "Warning"
+  display: display-warning)
+
+(define-type "serious-warning" "Serious warning"
+  display: display-warning)
+
+(define-type "error" "Error"
+  display: display-warning)
+
 ;; environment object
 
 (define-class <environment-object> ()

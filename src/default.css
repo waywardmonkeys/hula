@@ -620,3 +620,16 @@ section.save.hidden button {
     content: '...';
     background: #111
 }
+
+.object.warning pre,
+.object.serious-warning pre,
+.object.warning pre {
+    white-space: pre-wrap;
+    padding: 5px
+}
+
+.object.warning button,
+.object.serious-warning button,
+.object.warning button {
+    margin: 0 5px 5px;
+}

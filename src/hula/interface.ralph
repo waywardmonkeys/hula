@@ -841,13 +841,25 @@
     (attach (make <qualified-object-component>
                   object: object)
             header)
-    (bind ((progress (set! (get window "progress")
+    (bind ((results (set! (get window "results")
+                          (make-element "ul" parent: content)))
+           (progress (set! (get window "progress")
                            (make <progress-field>))))
       (attach progress window)
       (add-listener window "data"
                     (method (event)
                       (clear-interval (get window "interval"))
-                      (set! (progress-value progress) 100)))
+                      (set! (progress-value progress) 100)
+                      (bind-properties (built? notes)
+                          (decode-json (get event "data"))
+                        (do (method (object)
+                              (attach (make <object-component>
+                                            object: object)
+                                      (make-element "li" parent: results)))
+                            (as-environment-objects
+                             (make-object "objects" notes)))
+                        ;; TODO: show if successful
+                        )))
       (add-listener window "error"
                     (method (event)
                       (clear-interval (get window "interval"))))))
