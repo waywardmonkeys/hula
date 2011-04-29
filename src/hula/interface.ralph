@@ -588,7 +588,7 @@
          (button (set! (get component "button")
                        (make-element "button"
                                      parent: element
-                                     class: "save"))))
+                                     class: "small"))))
     (add-listener component "error"
                   (method (event)
                     (set! (js:get-property element "innerHTML")
