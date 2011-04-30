@@ -858,6 +858,14 @@
                                       (make-element "li" parent: results)))
                             (as-environment-objects
                              (make-object "objects" notes)))
+                        (animate element
+                                 (method ()
+                                   ;; TODO: calculate sensible height
+                                   (set! (element-height element) 200)))
+                        (set! (footer-label window)
+                              (concatenate
+                               (as-string (size notes))
+                               " Warnings"))
                         ;; TODO: show if successful
                         )))
       (add-listener window "error"
