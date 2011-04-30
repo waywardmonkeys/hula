@@ -300,13 +300,17 @@
   ;;               simple?: #t)
   ;;         element))
 
+;; each warning may have a has-source?
 (define-type "warning" "Warning"
+  has-source?: #f
   display: display-warning)
 
 (define-type "serious-warning" "Serious warning"
+  has-source?: #f
   display: display-warning)
 
 (define-type "error" "Error"
+  has-source?: #f
   display: display-warning)
 
 ;; environment object
@@ -317,6 +321,7 @@
   value
   name
   (parents [])
+  has-source?
   details)
 
 (define-function dereference (object)
@@ -356,7 +361,7 @@
     (do (method (property)
           (set! (get object property)
                 (get thing property)))
-        ["details" "incomplete?"])
+        ["details" "incomplete?" "has-source?"])
     (bind ((details (get object "details")))
       (do (method (detail)
             (set! (get details detail)

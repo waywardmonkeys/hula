@@ -985,22 +985,24 @@
 
 
 (define-function context-menu-items ((component <object-component>))
-  (bind ((type (get component "object" "type"))
+  (bind ((object (get component "object"))
+         (type (get object "type"))
          (items (make-object)))
-    (when (get type "has-source?")
+    (when (or (get type "has-source?")
+              (get object "has-source?"))
       (set! (get items "Source")
             (method (event)
               (show-view <editor-window>
                (js:get-property event "pageX")
                (js:get-property event "pageY")
-               object: (get component "object")))))
+               object: object))))
     (when (get type "buildable?")
       (set! (get items "Build")
             (method (event)
               (show-view <build-window>
                (js:get-property event "pageX")
                (js:get-property event "pageY")
-               object: (get component "object")))))
+               object: object))))
     (do (method (collection)
           (set! (get items (get collection "name"))
                 (method (event)
@@ -1008,7 +1010,7 @@
                    (js:get-property event "pageX")
                    (js:get-property event "pageY")
                    collection: collection
-                   object: (get component "object")))))
+                   object: object))))
         (get type "collections"))
     (do (method (graph)
           (set! (get items (get graph "name"))
@@ -1017,7 +1019,7 @@
                    (js:get-property event "pageX")
                    (js:get-property event "pageY")
                    graph: graph
-                   object: (get component "object")))))
+                   object: object))))
         (get type "graphs"))
     items))
 
