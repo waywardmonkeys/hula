@@ -191,11 +191,13 @@
   (set! (js:get-property view "label" "innerHTML") label))
 
 
-(define-function show-view (type x y #rest rest)
+(define-function show-view (type x y #rest rest #key (offset? #t))
   (bind ((view (apply make type rest)))
     (push-last *views* view)
     (set! (view-position view)
-          [(- x 10) (- y 10)])
+          (if offset?
+              [(- x 10) (- y 10)]
+              [x y]))
     (attach view body)
     (set-top-level view)
     view))
@@ -839,9 +841,10 @@
                          (make <progress-field>))))
     (attach progress window))
   (bind-methods ((clear (event)
-                   (clear-interval (get window "interval"))))
-    (add-listener window "data" clear)
-    (add-listener window "error" clear)))
+                   (clear-interval
+                    (get window "interval"))))
+    (add-listener window "error" clear)
+    (add-listener window "data" clear)))
 
 (define-function request ((window <progress-window>))
   (next-method window)
@@ -857,9 +860,10 @@
     (bind ((request (make <request> url: url)))
       (add-listener request "data"
                     (method (event)
-                        (bind ((response (decode-json (get event "data"))))
+                        (bind-properties (progress)
+                            (decode-json (get event "data"))
                           (set! (progress-value progress)
-                                (* (get response "progress") 100)))))
+                                (* progress 100)))))
       (add-listener request "error"
                     (method (event)
                       (clear-interval interval)))
@@ -871,7 +875,7 @@
   object)
 
 (define-function initialize ((window <build-window>) #rest rest
-                             #key object)
+                             #key object link?)
   (apply next-method window rest)
   (set! (header-label window) "Build")
   (bind-properties (element header content progress) window
@@ -900,6 +904,14 @@
                               (concatenate
                                (as-string (size notes))
                                " Warnings"))
+                        (when (and built? link?)
+                          (show-view <link-window>
+                            (+ (element-left element)
+                               (element-width element)
+                               20)
+                            (element-top element)
+                            offset?: #f
+                            object: object))
                         ;; TODO: show if successful
                         )))))
   (request window))
@@ -909,6 +921,32 @@
 
 (define-function request-url ((window <build-window>))
   (concatenate "/api/build"
+               (dereference (get window "object"))))
+
+;; link window
+
+(define-class <link-window> (<progress-window>)
+  object)
+
+(define-function initialize ((window <link-window>) #rest rest
+                             #key object)
+  (apply next-method window rest)
+  (set! (header-label window) "Link")
+  (bind-properties (element header progress) window
+    (add-class element "link")
+    (attach (make <qualified-object-component>
+                  object: object)
+            header)
+    (add-listener window "data"
+                  (method (event)
+                    (set! (progress-value progress) 100))))
+  (request window))
+
+(define-function progress-url ((window <link-window>))
+  "/api/link-progress")
+
+(define-function request-url ((window <link-window>))
+  (concatenate "/api/link"
                (dereference (get window "object"))))
 
 ;; workspace
@@ -1015,12 +1053,24 @@
                (js:get-property event "pageY")
                object: object))))
     (when (get type "buildable?")
-      (set! (get items "Build")
-            (method (event)
-              (show-view <build-window>
-               (js:get-property event "pageX")
-               (js:get-property event "pageY")
-               object: object))))
+      (extend! items
+               (make-object
+                "Build" (method (event)
+                          (show-view <build-window>
+                            (js:get-property event "pageX")
+                            (js:get-property event "pageY")
+                            object: object))
+                "Link" (method (event)
+                         (show-view <link-window>
+                           (js:get-property event "pageX")
+                           (js:get-property event "pageY")
+                           object: object))
+                "Build and Link" (method (event)
+                                   (show-view <build-window>
+                                     (js:get-property event "pageX")
+                                     (js:get-property event "pageY")
+                                     object: object
+                                     link?: #t)))))
     (do (method (collection)
           (set! (get items (get collection "name"))
                 (method (event)
