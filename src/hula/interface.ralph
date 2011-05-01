@@ -826,29 +826,63 @@
 (define-function (setter progress-value) ((component <progress-field>) value)
   (set! (attribute (get component "progress") "value") value))
 
+;; progress window
+
+(define-class <progress-window> (<remote-window>)
+  progress
+  interval)
+
+(define-function initialize ((window <progress-window>) #rest rest
+                             #key object)
+  (apply next-method window rest)
+  (bind ((progress (set! (get window "progress")
+                         (make <progress-field>))))
+    (attach progress window))
+  (bind-methods ((clear (event)
+                   (clear-interval (get window "interval"))))
+    (add-listener window "data" clear)
+    (add-listener window "error" clear)))
+
+(define-function request ((window <progress-window>))
+  (next-method window)
+  (set! (get window "interval")
+        (set-interval (curry request-progress window
+                             (progress-url window))
+                      1000)))
+
+(define-generic progress-url ((window <progress-window>)))
+
+(define-function request-progress ((window <progress-window>) url)
+  (bind-properties (progress interval) window
+    (bind ((request (make <request> url: url)))
+      (add-listener request "data"
+                    (method (event)
+                        (bind ((response (decode-json (get event "data"))))
+                          (set! (progress-value progress)
+                                (* (get response "progress") 100)))))
+      (add-listener request "error"
+                    (method (event)
+                      (clear-interval interval)))
+      (send request))))
+
 ;; build window
 
-(define-class <build-window> (<remote-window>)
-  object
-  interval)
+(define-class <build-window> (<progress-window>)
+  object)
 
 (define-function initialize ((window <build-window>) #rest rest
                              #key object)
   (apply next-method window rest)
   (set! (header-label window) "Build")
-  (bind-properties (element header content interval) window
+  (bind-properties (element header content progress) window
     (add-class element "build")
     (attach (make <qualified-object-component>
                   object: object)
             header)
     (bind ((results (set! (get window "results")
-                          (make-element "ul" parent: content)))
-           (progress (set! (get window "progress")
-                           (make <progress-field>))))
-      (attach progress window)
+                          (make-element "ul" parent: content))))
       (add-listener window "data"
                     (method (event)
-                      (clear-interval (get window "interval"))
                       (set! (progress-value progress) 100)
                       (bind-properties (built? notes)
                           (decode-json (get event "data"))
@@ -867,31 +901,15 @@
                                (as-string (size notes))
                                " Warnings"))
                         ;; TODO: show if successful
-                        )))
-      (add-listener window "error"
-                    (method (event)
-                      (clear-interval (get window "interval"))))))
-  (request window)
-  (set! (get window "interval")
-        (set-interval (curry request-progress window)
-                      500)))
+                        )))))
+  (request window))
+
+(define-function progress-url ((window <build-window>))
+  "/api/build-progress")
 
 (define-function request-url ((window <build-window>))
   (concatenate "/api/build"
                (dereference (get window "object"))))
-
-(define-function request-progress ((window <build-window>))
-  (bind-properties (progress interval) window
-    (bind ((request (make <request> url: "/api/build-progress")))
-      (add-listener request "data"
-                    (method (event)
-                        (bind ((response (decode-json (get event "data"))))
-                          (set! (progress-value progress)
-                                (* (get response "progress") 100)))))
-      (add-listener request "error"
-                    (method (event)
-                      (clear-interval interval)))
-      (send request))))
 
 ;; workspace
 
