@@ -11,6 +11,7 @@
   (graphs [])
   (has-source? #t)
   (buildable? #f)
+  (runnable? #f)
   display)
 
 (define-class <environment-collection> ()
@@ -60,6 +61,7 @@
 
 (define-type "library" "Library"
   buildable?: #t
+  runnable?: #t
   collections: [(make <environment-collection>
                       identifier: "modules"
                       name: "Modules"

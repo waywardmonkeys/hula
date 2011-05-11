@@ -923,6 +923,42 @@
   (concatenate "/api/build"
                (dereference (get window "object"))))
 
+;; application window
+
+;; TODO: use long polling to get output, maybe EventSource?
+
+(define-class <application-window> (<remote-window>)
+  object
+  state)
+
+(define-function initialize ((window <application-window>) #rest rest
+                             #key object)
+  (apply next-method window rest)
+  (set! (header-label window) "Application")
+  (bind-properties (element header content) window
+    (bind ((state (set! (get window "state")
+                        (make-element "span"
+                                      parent: content
+                                      class: "state"))))
+      (add-class element "application")
+      (attach (make <qualified-object-component>
+                    object: object)
+              header)
+      (add-listener window "data"
+                    (method (event)
+                      ;; TODO: ?
+                            ))
+      (add-listener window "close"
+                    (method (event)
+                      ;; TODO: send stop request
+                            ))))
+  (request window))
+
+(define-function request-url ((window <application-window>))
+  (concatenate "/api/run"
+               (dereference (get window "object"))))
+
+
 ;; link window
 
 (define-class <link-window> (<progress-window>)
@@ -1071,6 +1107,13 @@
                                      (js:get-property event "pageY")
                                      object: object
                                      link?: #t)))))
+    (when (get type "runnable?")
+      (set! (get items "Run")
+            (method (event)
+              (show-view <application-window>
+                (js:get-property event "pageX")
+                (js:get-property event "pageY")
+                object: object))))
     (do (method (collection)
           (set! (get items (get collection "name"))
                 (method (event)
