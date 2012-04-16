@@ -1,5 +1,5 @@
 (define-module hula/request
-  import: (runtime/core toolbox/interface toolbox/request)
+  import: (ralph/core toolbox/interface toolbox/request)
   export: (request <request-component>))
 
 ;; request component

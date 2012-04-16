@@ -1,5 +1,5 @@
 (define-module hula/interface
-  import: (runtime/core runtime/regexp runtime/watch
+  import: (ralph/core ralph/regexp ralph/watch
            toolbox/dom toolbox/serialization toolbox/interface
            hula/request hula/environment hula/grapher)
   export: (<window> <resizer>

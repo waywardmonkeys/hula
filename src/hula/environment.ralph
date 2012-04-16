@@ -1,5 +1,5 @@
 (define-module hula/environment
-  import: (runtime/core)
+  import: (ralph/core)
   export: (<environment-type> <environment-collection> <environment-object>))
 
 ;; types and collections

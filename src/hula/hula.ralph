@@ -1,5 +1,5 @@
 (define-module hula/hula
-  import: (runtime/core toolbox/dom hula/interface)
+  import: (ralph/core toolbox/dom hula/interface)
   export: (main))
 
 (define-function main ()

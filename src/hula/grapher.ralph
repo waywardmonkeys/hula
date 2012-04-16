@@ -1,5 +1,5 @@
 (define-module hula/grapher
-  import: (runtime/core
+  import: (ralph/core
            toolbox/interface toolbox/dom
            hula/request)
   export: (<grapher>))
