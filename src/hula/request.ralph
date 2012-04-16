@@ -1,4 +1,4 @@
-(define-module request
+(define-module hula/request
   import: (runtime/core toolbox/interface toolbox/request)
   export: (request <request-component>))
 

@@ -1,4 +1,4 @@
-(define-module interface
+(define-module hula/interface
   import: (runtime/core runtime/regexp runtime/watch
            toolbox/dom toolbox/serialization toolbox/interface
            hula/request hula/environment hula/grapher)

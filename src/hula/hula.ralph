@@ -1,4 +1,4 @@
-(define-module hula
+(define-module hula/hula
   import: (runtime/core toolbox/dom hula/interface)
   export: (main))
 

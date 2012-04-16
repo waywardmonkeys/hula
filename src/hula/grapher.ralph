@@ -1,4 +1,4 @@
-(define-module grapher
+(define-module hula/grapher
   import: (runtime/core
            toolbox/interface toolbox/dom
            hula/request)

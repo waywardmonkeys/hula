@@ -1,4 +1,4 @@
-(define-module environment
+(define-module hula/environment
   import: (runtime/core)
   export: (<environment-type> <environment-collection> <environment-object>))
 
