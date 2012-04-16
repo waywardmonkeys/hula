@@ -36,7 +36,7 @@
                              target)))
     ;; menu is only added once to document.body
     (unless (parent element)
-      (append-child body element)
+      (append-child *body* element)
       (add-listener document "click"
                     (method (event)
                       (unless (and (== (js:get-property event "pageX")
@@ -198,7 +198,7 @@
           (if offset?
               [(- x 10) (- y 10)]
               [x y]))
-    (attach view body)
+    (attach view *body*)
     (set-top-level view)
     view))
 
