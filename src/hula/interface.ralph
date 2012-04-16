@@ -20,7 +20,7 @@
 (define-class <context-menu> (<component>)
   x y)
 
-(define-function initialize ((component <context-menu>) #key entries)
+(define-method initialize ((component <context-menu>) #key entries)
    (bind ((element (set! (get component "element")
                          (make-element "menu"))))
     (set! (attribute element "type") "context")))
@@ -29,7 +29,7 @@
 
 (define-generic context-menu-items (object))
 
-(define-function attach ((menu <context-menu>) target)
+(define-method attach ((menu <context-menu>) target)
   (bind ((element (get menu "element"))
          (target-element (if (instance? target <component>)
                              (get target "element")
@@ -47,7 +47,7 @@
     (add-listener target-element "contextmenu"
                   (curry show menu target))))
 
-(define-function show ((menu <context-menu>) target event)
+(define-method show ((menu <context-menu>) target event)
   (bind ((x (set! (get menu "x")
                   (js:get-property event "pageX")))
          (y (set! (get menu "y")
@@ -131,7 +131,7 @@
   label
   content)
 
-(define-function initialize ((view <view>) #rest rest #key label)
+(define-method initialize ((view <view>) #rest rest #key label)
   (apply next-method view rest)
   (bind ((element (set! (get view "element")
                         (make-element "div" class: "view")))
@@ -206,7 +206,7 @@
 
 (define-class <window> (<view>))
 
-(define-function initialize ((window <window>) #rest rest #key label)
+(define-method initialize ((window <window>) #rest rest #key label)
   (apply next-method window rest)
   (bind ((element (get window "element"))
          (footer (set! (get window "footer")
@@ -229,7 +229,7 @@
 (define-class <remote-window> (<window>)
   request-component)
 
-(define-function initialize ((window <remote-window>) #rest rest)
+(define-method initialize ((window <remote-window>) #rest rest)
   (apply next-method window rest)
   (bind ((request-component
           (set! (get window "request-component")
@@ -237,14 +237,14 @@
          (content (get window "content")))
     (attach request-component content)))
 
-(define-function request ((window <remote-window>))
+(define-method request ((window <remote-window>))
   (request (get window "request-component")))
 
 ;; note
 
 (define-class <note> (<view>))
 
-(define-function initialize ((note <note>) #key label text)
+(define-method initialize ((note <note>) #key label text)
   (next-method note label: label)
   (bind-properties (element content) note
     (bind ((text-element (set! (get note "text")
@@ -263,14 +263,14 @@
 
 (define-class <dragger> (<component>))
 
-(define-function initialize ((dragger <dragger>) #key element)
+(define-method initialize ((dragger <dragger>) #key element)
   (when element
     (set! (get dragger "element-provided?") #t))
   (bind ((element (set! (get dragger "element")
                         (or element (make-element "div")))))
     (add-class element "dragger")))
 
-(define-function attach ((dragger <dragger>) (view <view>))
+(define-method attach ((dragger <dragger>) (view <view>))
   (unless (get dragger "element-provided?")
     (next-method dragger view))
   (bind ((view-element (get view "element"))
@@ -314,12 +314,12 @@
 
 (define-class <closer> (<component>))
 
-(define-function initialize ((closer <closer>) #key element)
+(define-method initialize ((closer <closer>) #key element)
   (bind ((element (set! (get closer "element")
                         (or element (make-element "button")))))
     (add-class element "close")))
 
-(define-function attach ((closer <closer>) (view <view>))
+(define-method attach ((closer <closer>) (view <view>))
   (next-method closer view)
   (bind ((view-element (get view "element"))
          (element (get closer "element"))
@@ -341,12 +341,12 @@
 
 (define-class <resizer> (<component>))
 
-(define-function initialize ((resizer <resizer>) #key element)
+(define-method initialize ((resizer <resizer>) #key element)
   (bind ((element (set! (get resizer "element")
                         (or element (make-element "div")))))
     (add-class element "resizer")))
 
-(define-function attach ((resizer <resizer>) (view <view>))
+(define-method attach ((resizer <resizer>) (view <view>))
   (next-method resizer view)
   (bind ((view-element (get view "element"))
          (element (get resizer "element"))
@@ -391,7 +391,7 @@
   target
   offset)
 
-(define-function initialize ((arrow <arrow>)
+(define-method initialize ((arrow <arrow>)
                              #rest rest #key source target)
   (apply next-method arrow rest)
   (bind ((element (set! (get arrow "element")
@@ -415,7 +415,7 @@
                     (stop-propagation event)))
     (updater)))
 
-(define-function update ((arrow <arrow>))
+(define-method update ((arrow <arrow>))
   (js:var path (get arrow "path"))
   (js:var element (get arrow "element"))
   (js:var offset (get arrow "offset"))
@@ -475,7 +475,7 @@
   instant?
   input)
 
-(define-function initialize ((component <search-field>) #rest rest)
+(define-method initialize ((component <search-field>) #rest rest)
   (apply next-method component rest)
   (bind ((section (set! (get component "element")
                         (make-element "section" class: "search")))
@@ -484,7 +484,7 @@
     (set! (attribute input "type") "search")
     (set! (attribute input "results") 0)))
 
-(define-function attach ((component <search-field>) (view <view>))
+(define-method attach ((component <search-field>) (view <view>))
  (bind-properties (instant? element input) component
     (insert-before element (get view "content"))
     (bind ((timeout #f))
@@ -511,7 +511,7 @@
   query)
 
 ;; TODO: state
-(define-function initialize ((window <search-window>))
+(define-method initialize ((window <search-window>))
   (next-method window)
   (bind-properties (element content) window
     (bind ((results (set! (get window "results")
@@ -545,15 +545,15 @@
   (set! (header-label window) "Search")
   (set! (footer-label window) "0 Results"))
 
-(define-function attach ((window <search-window>) element)
+(define-method attach ((window <search-window>) element)
   (next-method window element)
   (focus (get window "search")))
 
-(define-function request ((window <search-window>))
+(define-method request ((window <search-window>))
   (delete-children (get window "results"))
   (next-method window))
 
-(define-function request-url ((window <search-window>))
+(define-method request-url ((window <search-window>))
   (concatenate "/api/search/"
                (encode-component (get window "query"))))
 
@@ -562,7 +562,7 @@
 (define-class <grapher-window> (<window>)
   object)
 
-(define-function initialize ((window <grapher-window>)
+(define-method initialize ((window <grapher-window>)
                              #rest rest #key graph object)
   (apply next-method window rest)
   (bind-properties (element header content) window
@@ -583,7 +583,7 @@
 (define-class <save-field> (<component>)
   button)
 
-(define-function initialize ((component <save-field>) #rest rest)
+(define-method initialize ((component <save-field>) #rest rest)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
                         (make-element "section" class: "save")))
@@ -598,7 +598,7 @@
     (set! (js:get-property button "innerHTML")
           "Save")))
 
-(define-function attach ((component <save-field>) (view <view>))
+(define-method attach ((component <save-field>) (view <view>))
  (bind-properties (element button) component
     (insert-before element (get view "content"))
     (add-listener button "click"
@@ -616,7 +616,7 @@
 (define-class <editor> (<component>)
   editor)
 
-(define-function initialize ((editor <editor>) #key source)
+(define-method initialize ((editor <editor>) #key source)
   (bind ((element (set! (get editor "element")
                         (make-element "div" class: "editor")))
          (text (set! (get editor "text")
@@ -644,7 +644,7 @@
          "name" "Source"
          "identifier" "source")))
 
-(define-function initialize ((window <editor-window>)
+(define-method initialize ((window <editor-window>)
                              #rest rest #key object type)
   (apply next-method window rest)
   (add-class (get window "element")
@@ -724,7 +724,7 @@
               (get window "header")))
     (request window)))
 
-(define-function context-menu-items ((window <editor-window>))
+(define-method context-menu-items ((window <editor-window>))
   (bind ((editor (get window "editor" "editor"))
          (selection ((js:get-property editor "getSelection"))))
     (unless (empty? selection)
@@ -741,11 +741,11 @@
                          parents: (get window "object" "parents")
                          value: selection)))))))
 
-(define-function request ((window <editor-window>))
+(define-method request ((window <editor-window>))
   (hide (get window "editor"))
   (next-method window))
 
-(define-function request-url ((window <editor-window>))
+(define-method request-url ((window <editor-window>))
   (bind-properties (object type) window
     (concatenate "/api/" (get type "identifier")
                  (dereference object))))
@@ -756,7 +756,7 @@
   collection
   object)
 
-(define-function initialize ((browser <browser>) #rest rest
+(define-method initialize ((browser <browser>) #rest rest
                              #key collection object)
   (apply next-method browser rest)
   (bind-properties (element header content) browser
@@ -789,16 +789,16 @@
                            default-type: (get collection "type"))))))
     (request browser)))
 
-(define-function request ((browser <browser>))
+(define-method request ((browser <browser>))
   (delete-children (get browser "results"))
   (next-method browser))
 
-(define-function request-url ((collection <environment-collection>)
+(define-method request-url ((collection <environment-collection>)
                               #key object)
   (concatenate "/api/" (get collection "identifier")
                (if object (dereference object) "")))
 
-(define-function request-url ((browser <browser>))
+(define-method request-url ((browser <browser>))
   (bind-properties (object collection prefix) browser
     (concatenate (request-url collection object: object)
                  (if (and prefix
@@ -812,7 +812,7 @@
 (define-class <progress-field> (<component>)
   progress)
 
-(define-function initialize ((component <progress-field>) #rest rest)
+(define-method initialize ((component <progress-field>) #rest rest)
   (apply next-method component rest)
   (bind ((section (set! (get component "element")
                         (make-element "section" class: "progress")))
@@ -821,7 +821,7 @@
     (set! (attribute progress "min") 0)
     (set! (attribute progress "max") 100)))
 
-(define-function attach ((component <progress-field>) (view <view>))
+(define-method attach ((component <progress-field>) (view <view>))
  (bind-properties (element) component
     (insert-before element (get view "content"))))
 
@@ -834,7 +834,7 @@
   progress
   interval)
 
-(define-function initialize ((window <progress-window>) #rest rest
+(define-method initialize ((window <progress-window>) #rest rest
                              #key object)
   (apply next-method window rest)
   (bind ((progress (set! (get window "progress")
@@ -846,7 +846,7 @@
     (add-listener window "error" clear)
     (add-listener window "data" clear)))
 
-(define-function request ((window <progress-window>))
+(define-method request ((window <progress-window>))
   (next-method window)
   (set! (get window "interval")
         (set-interval (curry request-progress window
@@ -874,7 +874,7 @@
 (define-class <build-window> (<progress-window>)
   object)
 
-(define-function initialize ((window <build-window>) #rest rest
+(define-method initialize ((window <build-window>) #rest rest
                              #key object link?)
   (apply next-method window rest)
   (set! (header-label window) "Build")
@@ -916,10 +916,10 @@
                         )))))
   (request window))
 
-(define-function progress-url ((window <build-window>))
+(define-method progress-url ((window <build-window>))
   "/api/build-progress")
 
-(define-function request-url ((window <build-window>))
+(define-method request-url ((window <build-window>))
   (concatenate "/api/build"
                (dereference (get window "object"))))
 
@@ -931,7 +931,7 @@
   object
   state)
 
-(define-function initialize ((window <application-window>) #rest rest
+(define-method initialize ((window <application-window>) #rest rest
                              #key object)
   (apply next-method window rest)
   (set! (header-label window) "Application")
@@ -954,7 +954,7 @@
                             ))))
   (request window))
 
-(define-function request-url ((window <application-window>))
+(define-method request-url ((window <application-window>))
   (concatenate "/api/run"
                (dereference (get window "object"))))
 
@@ -964,7 +964,7 @@
 (define-class <link-window> (<progress-window>)
   object)
 
-(define-function initialize ((window <link-window>) #rest rest
+(define-method initialize ((window <link-window>) #rest rest
                              #key object)
   (apply next-method window rest)
   (set! (header-label window) "Link")
@@ -978,10 +978,10 @@
                     (set! (progress-value progress) 100))))
   (request window))
 
-(define-function progress-url ((window <link-window>))
+(define-method progress-url ((window <link-window>))
   "/api/link-progress")
 
-(define-function request-url ((window <link-window>))
+(define-method request-url ((window <link-window>))
   (concatenate "/api/link"
                (dereference (get window "object"))))
 
@@ -989,13 +989,13 @@
 
 (define-class <workspace> (<component>))
 
-(define-function initialize ((workspace <workspace>))
+(define-method initialize ((workspace <workspace>))
   (set! (get workspace "element")
         (make-element "div" class: "workspace")))
 
 (define *workspace* (make <workspace>))
 
-(define-function context-menu-items ((workspace <workspace>))
+(define-method context-menu-items ((workspace <workspace>))
   (bind ((items (make-object
                  "Search" (method (event)
                             (show-view <search-window>
@@ -1015,7 +1015,7 @@
 
 (define-class <activity> (<component>))
 
-(define-function initialize ((activity <activity>))
+(define-method initialize ((activity <activity>))
   (set! (get activity "element")
         (make-element "div" class: "activity"))
   (hide activity))
@@ -1024,7 +1024,7 @@
 
 (define-class <not-available> (<component>))
 
-(define-function initialize ((not-available <not-available>))
+(define-method initialize ((not-available <not-available>))
   (bind ((element (set! (get not-available "element")
                         (make-element "div" class: "not-available"))))
     (set! (js:get-property element "innerHTML") "Not available")
@@ -1035,7 +1035,7 @@
 (define-class <object-component> (<component>)
   object)
 
-(define-function initialize ((component <object-component>)
+(define-method initialize ((component <object-component>)
                              #rest rest #key element object simple?)
   (apply next-method component rest)
   (bind ((element-provided? element)
@@ -1071,12 +1071,12 @@
             (display)))))
   (attach *context-menu* component))
 
-(define-function request-url ((component <object-component>))
+(define-method request-url ((component <object-component>))
   (concatenate "/api/info"
                (dereference (get component "object"))))
 
 
-(define-function context-menu-items ((component <object-component>))
+(define-method context-menu-items ((component <object-component>))
   (bind ((object (get component "object"))
          (type (get object "type"))
          (items (make-object)))
@@ -1139,7 +1139,7 @@
 (define-class <qualified-object-component> (<component>)
   object)
 
-(define-function initialize ((component <qualified-object-component>)
+(define-method initialize ((component <qualified-object-component>)
                              #rest rest #key object)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")

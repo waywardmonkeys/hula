@@ -10,7 +10,7 @@
   object
   graph)
 
-(define-function initialize ((component <grapher>) #rest rest
+(define-method initialize ((component <grapher>) #rest rest
                              #key object graph)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
@@ -31,7 +31,7 @@
   object-component
   right)
 
-(define-function initialize ((node <graph-node>) #rest rest
+(define-method initialize ((node <graph-node>) #rest rest
                              #key object left? right?)
   (apply next-method node rest)
   (bind ((element (set! (get node "element")
@@ -65,7 +65,7 @@
   collection
   fetched?)
 
-(define-function initialize ((graphs <graphs>) #rest rest
+(define-method initialize ((graphs <graphs>) #rest rest
                              #key node graph left? right?)
   (apply next-method graphs rest)
   (bind ((side (if left? "left" "right"))
@@ -99,10 +99,10 @@
                               (as-environment-objects result
                                default-type: (get collection "type")))))))))
 
-(define-function request ((graphs <graphs>))
+(define-method request ((graphs <graphs>))
   (request (get graphs "request-component")))
 
-(define-function request-url ((graphs <graphs>))
+(define-method request-url ((graphs <graphs>))
   (request-url (get graphs "collection")
                object: (get graphs "node" "object")))
 
@@ -113,7 +113,7 @@
   node
   after)
 
-(define-function initialize ((component <graph-component>) #rest rest
+(define-method initialize ((component <graph-component>) #rest rest
                              #key object graph left? right?)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")

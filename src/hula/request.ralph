@@ -10,7 +10,7 @@
   not-available
   request)
 
-(define-function initialize ((component <request-component>) #rest rest
+(define-method initialize ((component <request-component>) #rest rest
                              #key target)
   (apply next-method component rest)
   (bind ((element (set! (get component "element")
@@ -31,7 +31,7 @@
 
 (define-generic request-url (object))
 
-(define-function request ((component <request-component>))
+(define-method request ((component <request-component>))
   (bind-properties (element activity not-available target) component
     (show activity)
     (hide not-available)
