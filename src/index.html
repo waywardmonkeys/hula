@@ -9,10 +9,14 @@
     <link rel="stylesheet" href="lib/dylan.css" type="text/css" />
     <script src="lib/codemirror.js"></script>
     <script src="lib/dylan.js"></script>
-    <script src="require.js"></script>
+    <script src="toolbox/require.js"></script>
     <script>
-      require('hula/hula', function (hula) {
-        hula.main();
+      require.frames = true;
+      require.force = true;
+      window.addEventListener("load", function () {
+        require(['hula/hula'], function (hula) {
+          hula.main();
+        });
       });
     </script>
   </head>
